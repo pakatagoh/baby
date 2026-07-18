@@ -1,0 +1,6 @@
+frozen-milk/
+node_modules/
+.env
+.env.local
+dist/
+.output/
