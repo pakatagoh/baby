@@ -28,16 +28,16 @@ function requireEnv(name: string): string {
   return value;
 }
 
-// Spreadsheet ID, tab name, and OAuth token location are all provided via the
-// environment so nothing identifying is committed to the repository.
-const SHEET_ID = requireEnv("GOOGLE_SHEET_ID");
-const TAB = requireEnv("GOOGLE_SHEET_TAB");
-const TOKEN_PATH = requireEnv("GOOGLE_TOKEN_PATH");
-
+// Spreadsheet ID, tab name, and OAuth token location are read from the
+// environment per request (never at module scope) so nothing identifying is
+// committed and values resolve at request time. See:
+// https://tanstack.com/start/latest/docs/framework/react/guide/environment-variables
 const HEADER_ROW = 1;
 
 function getSheetsClient(): sheets_v4.Sheets {
-  const tokenData = JSON.parse(readFileSync(TOKEN_PATH, "utf-8"));
+  const tokenData = JSON.parse(
+    readFileSync(requireEnv("GOOGLE_TOKEN_PATH"), "utf-8"),
+  );
   const auth = new google.auth.OAuth2(
     tokenData.client_id,
     tokenData.client_secret,
@@ -52,11 +52,13 @@ function getSheetsClient(): sheets_v4.Sheets {
 
 export class GoogleSheetsBackend implements MilkStorageBackend {
   async append(entry: MilkSheetEntry): Promise<number> {
+    const sheetId = requireEnv("GOOGLE_SHEET_ID");
+    const tab = requireEnv("GOOGLE_SHEET_TAB");
     const sheets = getSheetsClient();
 
     const colAResult = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: `'${TAB}'!A:A`,
+      spreadsheetId: sheetId,
+      range: `'${tab}'!A:A`,
     });
 
     const values = colAResult.data.values || [];
@@ -64,8 +66,8 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
     const nextRow = lastRow + 1;
 
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SHEET_ID,
-      range: `'${TAB}'!A${nextRow}:G${nextRow}`,
+      spreadsheetId: sheetId,
+      range: `'${tab}'!A${nextRow}:G${nextRow}`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [
@@ -86,11 +88,13 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
   }
 
   async getLatest(): Promise<MilkSheetEntry | null> {
+    const sheetId = requireEnv("GOOGLE_SHEET_ID");
+    const tab = requireEnv("GOOGLE_SHEET_TAB");
     const sheets = getSheetsClient();
 
     const result = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: `'${TAB}'!A${HEADER_ROW + 1}:G`,
+      spreadsheetId: sheetId,
+      range: `'${tab}'!A${HEADER_ROW + 1}:G`,
     });
 
     const rows = result.data.values || [];
