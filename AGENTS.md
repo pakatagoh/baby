@@ -1,3 +1,257 @@
+# AGENTS.md
+
+Guidance for AI coding agents (and future-you) working in this repo. Read this
+before making changes.
+
+## What this is
+
+**Baby Tracker** — a web app for tracking frozen breast milk storage. Snap a
+photo of a milk packet → AI vision reads the handwritten label → image is
+saved + logged to a Google Sheet. Optimized images are served on the fly via
+[imgproxy](https://imgproxy.net/).
+
+- **Framework:** [TanStack Start](https://tanstack.com/start) (React 19, SSR,
+  file-based routing, server functions) on [Nitro](https://nitro.build/).
+- **Styling:** Tailwind CSS v4 + shadcn/ui (no pre-built theme — components
+  live in `src/components/ui/`).
+- **Data:** TanStack Query (SSR-integrated via `@tanstack/react-router-ssr-query`)
+  + Google Sheets as the database (OAuth token auth).
+- **AI:** OpenCode AI (`minimax-m3` vision model) via Vercel AI SDK.
+- **Images:** Sharp for upload-time resize/optimize; imgproxy for serve-time
+  resize/crop with HMAC-signed URLs.
+- **Deployment:** Docker → k3s (FluxCD HelmRelease using bjw-s `app-template`
+  chart). The k3s manifests live in a **separate repo**
+  (`github.com/pakatagoh/homelab` → `apps/baby/` + `infrastructure/imgproxy/`).
+  This repo is the app source; the homelab repo is the GitOps deployment layer.
+
+## Project layout
+
+```
+src/
+├── components/
+│   ├── ui/button.tsx              # shadcn/ui button (the only shadcn component so far)
+│   ├── SnapMilkPacketButton.tsx   # Camera button + hidden file input
+│   ├── PendingUploadList.tsx      # In-flight uploads (processing/done/error)
+│   ├── StatusFilterChips.tsx      # "Active" / "Completed" / "All" + Filters toggle
+│   ├── AdvancedFilters.tsx        # Expandable date/amount/packets filter panel
+│   ├── EntryCard.tsx              # Single saved milk-packet row
+│   ├── UploadPage.tsx             # Main page — orchestrates all of the above
+│   └── Footer.tsx                 # Site footer
+├── lib/
+│   ├── ai.ts                      # Vision model: analyzeMilkPacket(base64) → {date,time,amount,packets,notes}
+│   ├── images.ts                  # saveUpload() + generateImgproxyUrl() (HMAC-signed)
+│   ├── sheets.ts                  # Google Sheets CRUD (OAuth, read/write, MilkStorageBackend interface)
+│   ├── upload-fn.ts               # Server function: POST uploadMilk (FormData validator → processUpload)
+│   ├── entries-fn.ts              # Server function: GET getEntries (→ sheets.getAll)
+│   ├── process-upload.ts          # Serialised upload queue (save → imgproxy URL → AI analysis → sheet append)
+│   └── utils.ts                   # cn() / clsx tailwind-merge helper
+├── routes/
+│   ├── __root.tsx                 # Root layout: <html> shell, HeadContent, devtools, Footer
+│   ├── index.tsx                  # Home: prefetches entries, renders <UploadPage>
+│   └── api/health.ts             # GET /api/health → { status: "ok", timestamp }
+├── router.tsx                     # createRouter + QueryClient setup + SSR integration
+├── routeTree.gen.ts              # Auto-generated route tree (DO NOT EDIT — run `pnpm generate-routes`)
+└── styles.css                     # Tailwind entry point
+```
+
+## Upload pipeline (the core flow)
+
+```
+📸 Browser: user snaps photo
+   │  FormData { image: File }
+   ▼
+🧵 upload-fn.ts (server function, POST)
+   │  Validates: must be image, ≤ 20MB
+   │  Calls processUpload(file)
+   ▼
+🔀 process-upload.ts (serialised queue — one-at-a-time to avoid sheet row clobber)
+   │  1. saveUpload(file, "milk")         → writes optimised JPEG to IMAGE_ORIGINALS_DIR
+   │  2. generateImgproxyUrl(path, 400)   → HMAC-signed URL for 400×400 thumbnail
+   │  3. analyzeMilkPacket(base64, mime)  → AI vision reads label
+   │  4. appendToSheet({date, time, …})   → Google Sheets row append
+   │  Returns { previewUrl, result }
+   ▼
+🖥️ Browser: PendingUploadList shows status; on done, invalidates ["entries"] query
+```
+
+### Why the serialised queue?
+
+`appendToSheet` reads the last used row (via `colAResult.values.length`) then
+writes to `nextRow`. Two concurrent appends would both pick the same row and
+clobber each other. The queue (`process-upload.ts` line ~19: `let chain:
+Promise<unknown>`) serialises within one server process. If you ever run
+multiple replicas, switch to the Sheets `values.append` API (atomic
+end-of-table insert) instead.
+
+## Key patterns
+
+### Server functions (`createServerFn`)
+
+All server-side logic goes through TanStack Start server functions. They are
+the **only** bridge between client and server — there are no `/api/*` REST
+endpoints (except `/api/health` for k8s probes).
+
+- **`uploadMilk`** (`upload-fn.ts`): `POST`, takes `FormData`, validates with a
+  sync function, handler dynamic-imports `process-upload` (which uses Node
+  builtins like `sharp`, `fs` — keeps them out of the client bundle).
+- **`getEntries`** (`entries-fn.ts`): `GET`, no validator, just calls
+  `sheets.getAllEntries()`.
+
+**Rule:** Server functions go in `src/lib/*-fn.ts` (not in route files). Keep
+them thin — validation + call into a lib module that does the real work. Never
+import Node builtins at the top level of a server function file (they get
+tree-shaken by TanStack's import protection, but dynamic `import()` is safer
+and the established pattern here).
+
+### Environment variables
+
+All env access is **per-request** (inside handler functions), never at module
+scope. This is a TanStack Start requirement — module-scope `process.env` reads
+at build time and leak between requests.
+
+- `requireEnv(name)` in `sheets.ts` throws if a var is missing — use it for
+  mandatory vars.
+- Optional vars use `process.env.X || "default"`.
+- See `.env.example` for the full list.
+
+### Google Sheets as database
+
+The `MilkStorageBackend` interface (`sheets.ts`) abstracts the storage layer.
+The only implementation is `GoogleSheetsBackend`, but the interface exists so
+you can swap in a test double or migrate to a real DB later.
+
+- Sheet layout: row 1 = headers, rows 2+ = data. Columns: A=date, B=time,
+  C=amount, D=packets, E=totalFrozen, F=totalUsed, G=notes, H=imageUrl.
+- Dates are stored as `'15-Jul-26` (leading `'` to prevent Sheets
+  auto-formatting). The `'` is stripped on read.
+- Auth: OAuth 2.0 token file (path from `GOOGLE_TOKEN_PATH`). The token file
+  is gitignored. Format: `{client_id, client_secret, redirect_uris, token,
+  refresh_token}`.
+
+### imgproxy URL signing
+
+`generateImgproxyUrl()` in `images.ts` creates HMAC-SHA256 signed URLs. Both
+the app and imgproxy must share the same `IMGPROXY_KEY` + `IMGPROXY_SALT` (hex-
+encoded). The Docker Compose setup ensures this via the shared `.env` file.
+
+URL format: `{base}/{signature}/{processing}/plain/{source}`
+Example: `http://localhost:3000/img/AbCdEf.../rs:fit:400:0/plain/local:///images/originals/milk/2026-07/abc.jpg`
+
+### TypeScript conventions
+
+- **Never cast** to satisfy the compiler — fix the types instead. TanStack
+  Router's type inference depends on the `Register` module augmentation in
+  `router.tsx`.
+- **`as const satisfies`** for filter option tuples (see `StatusFilterChips`).
+- **Export types** that other components need (`PendingEntry`, `EntryFilter`,
+  `NumOp`, `MilkSheetEntry`, `MilkPacketResult`).
+
+## Docker Compose (local dev)
+
+Two modes, matching the k3s production architecture:
+
+| Mode | Command | What runs where |
+|---|---|---|
+| Full Docker | `docker compose up -d` | nginx + app (built from Dockerfile) + imgproxy |
+| Hybrid dev | `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d` + `pnpm dev` | imgproxy + nginx in Docker, app on host with HMR |
+
+In both modes, nginx mirrors the k3s Traefik ingress: `/` → app:3000, `/img` →
+imgproxy:8080. The app is accessed at `http://localhost:3000`.
+
+Key files: `docker-compose.yml`, `docker-compose.dev.yml`, `nginx.conf`,
+`nginx.dev.conf`, `scripts/generate-imgproxy-keys.sh`.
+
+## Hard rules
+
+1. **Never commit `.env` or `google-token.json`.** Both are gitignored. They
+   contain secrets (API keys, OAuth tokens, imgproxy signing keys).
+2. **Never edit `routeTree.gen.ts` by hand.** It's auto-generated by
+   `pnpm generate-routes` (driven by `@tanstack/router-plugin` in Vite). Edit
+   route files in `src/routes/` and let the plugin regenerate.
+3. **Server functions stay thin.** Validation + delegate to `src/lib/*.ts`.
+   No business logic in route files or server function handlers.
+4. **All server-side imports of Node builtins use dynamic `import()`.** This
+   prevents them leaking into the client bundle. The pattern is established in
+   `upload-fn.ts` → `process-upload.ts`.
+5. **One-at-a-time sheet writes.** The serialised upload queue exists for a
+   reason. If you rearchitect uploads, either keep serialisation or switch the
+   sheet backend to `values.append` (atomic).
+6. **imgproxy key/salt must be hex-encoded 32-byte values** (64 hex chars
+   each). Generate with `./scripts/generate-imgproxy-keys.sh` or
+   `openssl rand -hex 32`.
+
+## Common tasks
+
+### Add a new shadcn/ui component
+```bash
+pnpm dlx shadcn@latest add <component>
+```
+Components land in `src/components/ui/`. Import from `@/components/ui/<name>`.
+
+### Run type checks
+```bash
+npx tsc --noEmit
+```
+
+### Run tests
+```bash
+pnpm test
+```
+
+### Generate imgproxy keys for dev
+```bash
+./scripts/generate-imgproxy-keys.sh
+```
+Writes `IMGPROXY_KEY` + `IMGPROXY_SALT` into `.env`.
+
+### Test the full Docker stack locally
+```bash
+docker compose up -d
+# App:   http://localhost:3000
+# Health: http://localhost:3000/api/health
+# imgproxy health: http://localhost:3000/img/health
+```
+
+### Deploy to k3s
+The deployment is GitOps-driven from the **homelab repo**, not this one.
+
+1. Build + push a new Docker image to `ghcr.io/pakatagoh/baby`:
+   ```bash
+   docker build -t ghcr.io/pakatagoh/baby:<tag> .
+   docker push ghcr.io/pakatagoh/baby:<tag>
+   ```
+2. Update the image tag in `homelab/apps/baby/release.yaml` (or let Flux's
+   image-automation pick it up if you push a semver tag).
+3. Push to the homelab repo — Flux reconciles automatically.
+
+## Known gotchas
+
+- **Sharp in Docker:** The production Dockerfile installs `python3 make g++`
+  in the final stage because `sharp` needs them at runtime for install scripts
+  (not just build time). Don't remove them without testing.
+- **`GOOGLE_SHEET_TAB` with spaces:** Wrap the value in quotes in `.env`
+  (e.g. `GOOGLE_SHEET_TAB="Frozen Breast Milk"`). The Google Sheets API range
+  syntax wraps the tab name in single quotes: `'Frozen Breast Milk'!A:A`.
+- **imgproxy path prefix:** imgproxy has `IMGPROXY_PATH_PREFIX=/img`, so it
+  expects requests at `/img/...`. The nginx config passes `/img/*` → imgproxy
+  without stripping the prefix. If you change the prefix, update both
+  `IMGPROXY_PATH_PREFIX` on the imgproxy container and `IMGPROXY_BASE_URL` on
+  the app.
+- **`host.docker.internal`** is used in `nginx.dev.conf` for hybrid dev mode.
+  This works on Docker Desktop (macOS/Windows) but not on Linux. On Linux, use
+  `--add-host=host.docker.internal:host-gateway` or switch to the full Docker
+  stack.
+- **Google Sheets rate limits:** The Sheets API has a 60 req/user/min quota.
+  The `getEntries` call fetches all rows in one request (range `A2:H`), so
+  it's fine for typical usage. But rapid-fire uploads + refetches could hit
+  the limit — the serialised queue helps by spacing out `append` calls.
+- **Date parsing:** Sheet dates are `DD-Mon-YY` (e.g. `15-Jul-26`). The
+  `parseSheetDate` helper parses this format. If the date format changes in
+  the sheet, update both the helper and the AI prompt in `ai.ts`.
+- **`useServerFn` must be called at the top level** of a component (rules of
+  hooks). The established pattern: `const uploadFn = useServerFn(uploadMilk)`
+  at the top, then call `uploadFn({ data: form })` in event handlers.
+
 <!-- intent-skills:start -->
 # TanStack Intent - before editing files, run the matching guidance command.
 tanstackIntent:
