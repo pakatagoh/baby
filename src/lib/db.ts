@@ -4,8 +4,8 @@ import fs from "node:fs";
 
 const DB_PATH =
   process.env.NODE_ENV === "production"
-    ? process.env.DATABASE_PATH || "/data/frozen-milk.db"
-    : process.env.DATABASE_PATH || "frozen-milk.db";
+    ? process.env.DATABASE_PATH || "/data/baby.db"
+    : process.env.DATABASE_PATH || "baby.db";
 
 const dir = path.dirname(DB_PATH);
 if (dir && dir !== ".") {

@@ -84,7 +84,7 @@ export function UploadPage() {
   return (
     <main className="mx-auto max-w-md px-4 py-8">
       <h1 className="mb-6 text-center text-2xl font-bold">
-        🍼 Frozen Milk Tracker
+        🍼 Baby Tracker
       </h1>
 
       <div className="mb-6 flex justify-center">
