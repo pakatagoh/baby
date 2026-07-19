@@ -9,6 +9,8 @@ export interface MilkSheetEntry {
   time: string; // "19:30"
   amount: number; // 80
   packets: number; // 2
+  totalFrozen: number; // 0
+  totalUsed: number; // 0
   notes: string; // "" or handwritten note
   imageUrl: string; // imgproxy URL
 }
@@ -16,6 +18,7 @@ export interface MilkSheetEntry {
 export interface MilkStorageBackend {
   append(entry: MilkSheetEntry): Promise<number>;
   getLatest(): Promise<MilkSheetEntry | null>;
+  getAll(): Promise<MilkSheetEntry[]>;
 }
 
 // ─── Google Sheets implementation ───────────────────────────────────────────
@@ -67,7 +70,7 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
-      range: `'${tab}'!A${nextRow}:G${nextRow}`,
+      range: `'${tab}'!A${nextRow}:H${nextRow}`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [
@@ -76,7 +79,8 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
             `'${entry.time}`,
             entry.amount,
             entry.packets,
-            "Frozen",
+            entry.totalFrozen,
+            entry.totalUsed,
             entry.notes,
             entry.imageUrl,
           ],
@@ -94,7 +98,7 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
 
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `'${tab}'!A${HEADER_ROW + 1}:G`,
+      range: `'${tab}'!A${HEADER_ROW + 1}:H`,
     });
 
     const rows = result.data.values || [];
@@ -111,9 +115,39 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
       time,
       amount: Number(lastRow[2]) || 0,
       packets: Number(lastRow[3]) || 0,
-      notes: String(lastRow[5] || ""),
-      imageUrl: String(lastRow[6] || ""),
+      totalFrozen: Number(lastRow[4]) || 0,
+      totalUsed: Number(lastRow[5]) || 0,
+      notes: String(lastRow[6] || ""),
+      imageUrl: String(lastRow[7] || ""),
     };
+  }
+
+  async getAll(): Promise<MilkSheetEntry[]> {
+    const sheetId = requireEnv("GOOGLE_SHEET_ID");
+    const tab = requireEnv("GOOGLE_SHEET_TAB");
+    const sheets = getSheetsClient();
+
+    const result = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: `'${tab}'!A${HEADER_ROW + 1}:H`,
+    });
+
+    const rows = result.data.values || [];
+    const entries: MilkSheetEntry[] = [];
+    for (const row of rows) {
+      if (!row || row.length < 4) continue;
+      entries.push({
+        date: String(row[0] || "").replace(/^'/, ""),
+        time: String(row[1] || "").replace(/^'/, ""),
+        amount: Number(row[2]) || 0,
+        packets: Number(row[3]) || 0,
+        totalFrozen: Number(row[4]) || 0,
+        totalUsed: Number(row[5]) || 0,
+        notes: String(row[6] || ""),
+        imageUrl: String(row[7] || ""),
+      });
+    }
+    return entries;
   }
 }
 
@@ -137,4 +171,8 @@ export async function appendToSheet(entry: MilkSheetEntry): Promise<number> {
 
 export async function getLatestEntry(): Promise<MilkSheetEntry | null> {
   return backend.getLatest();
+}
+
+export async function getAllEntries(): Promise<MilkSheetEntry[]> {
+  return backend.getAll();
 }

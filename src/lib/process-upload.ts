@@ -35,6 +35,8 @@ export function processUpload(file: File): Promise<UploadResult> {
       time: result.time,
       amount: result.amount_ml,
       packets: result.packets,
+      totalFrozen: 0,
+      totalUsed: 0,
       notes: result.notes || "",
       imageUrl: previewUrl,
     });
