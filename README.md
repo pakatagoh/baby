@@ -1,193 +1,178 @@
-Welcome to your new TanStack Start app! 
+# 🍼 Baby Tracker
 
-# Getting Started
+A web app for tracking frozen breast milk storage. Snap a photo of a milk packet, and the app uses AI vision to read the handwritten label (date, time, amount), saves the image, and logs everything to a Google Sheet. Optimized images are served on the fly via [imgproxy](https://imgproxy.net/).
 
-To run this application:
+## How it works
+
+```
+📸 Snap photo  →  🧠 AI reads label  →  📊 Row appended to Google Sheets
+                          │
+                          ▼
+                  🖼️ Image saved to disk
+                          │
+                          ▼
+                  🌐 Served via imgproxy (resize/crop on the fly)
+```
+
+1. **Capture** — tap the camera button, snap a picture of a frozen milk packet.
+2. **Analyze** — the image is sent to a vision model that extracts date, time, amount (ml), and packet count from the handwritten label.
+3. **Store** — the optimized JPEG is saved to disk and a signed imgproxy URL is generated. The extracted data is appended to a Google Sheet.
+4. **Browse** — the UI shows every logged packet with its photo, pulled from the sheet. Filter by status, date range, amount, or packet count.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | [TanStack Start](https://tanstack.com/start) (React 19 + SSR) |
+| Routing | [TanStack Router](https://tanstack.com/router) (file-based, type-safe) |
+| Data fetching | [TanStack Query](https://tanstack.com/query) with SSR integration |
+| Server runtime | [Nitro](https://nitro.build/) |
+| Styling | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
+| AI / Vision | [OpenCode AI](https://opencode.ai/) (`minimax-m3` model) via [Vercel AI SDK](https://sdk.vercel.ai/) |
+| Image processing | [Sharp](https://sharp.pixelplumbing.com/) (resize + optimize on upload) |
+| Image serving | [imgproxy](https://imgproxy.net/) (on-the-fly resize/crop with signed URLs) |
+| Database | Google Sheets (yes, really — it's simple and shareable) |
+| Deployment | Docker → k3s (FluxCD + Helm) |
+
+## Prerequisites
+
+- **Node.js** ≥ 22
+- **pnpm** (enabled via corepack)
+- **Docker** (for imgproxy and production-like testing)
+- A **Google Cloud project** with Sheets API enabled and an OAuth token (see [google-token.json](#google-tokenjson))
+- An **OpenCode AI** API key
+
+## Getting started
+
+### 1. Clone and install
 
 ```bash
+git clone <repo-url> baby
+cd baby
 pnpm install
+```
+
+### 2. Set up environment
+
+```bash
+cp .env.example .env
+```
+
+Fill in the required values in `.env`:
+
+| Variable | Description |
+|---|---|
+| `GOOGLE_SHEET_ID` | The Google Sheet ID (from the sheet URL) |
+| `GOOGLE_SHEET_TAB` | The tab/sheet name (e.g. `Frozen Breast Milk`) |
+| `GOOGLE_TOKEN_PATH` | Path to a Google OAuth token JSON file (default: `./google-token.json`) |
+| `OPENCODE_API_KEY` | API key from [OpenCode](https://opencode.ai/) |
+| `IMAGE_ORIGINALS_DIR` | Where uploaded images are stored (default: `./data/images/originals`) |
+| `IMGPROXY_BASE_URL` | Base URL for imgproxy (default: `http://localhost:3000/img`) |
+| `IMGPROXY_KEY` | 64-char hex key for imgproxy URL signing |
+| `IMGPROXY_SALT` | 64-char hex salt for imgproxy URL signing |
+
+### 3. Generate imgproxy keys
+
+```bash
+./scripts/generate-imgproxy-keys.sh
+```
+
+This creates `IMGPROXY_KEY` and `IMGPROXY_SALT` and writes them into your `.env`.
+
+### 4a. Local dev with hot reload
+
+Run imgproxy + nginx in Docker, and the app on your host with hot module replacement:
+
+```bash
+# Terminal 1 — start imgproxy + reverse proxy
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Terminal 2 — start the dev server
 pnpm dev
 ```
 
-# Building For Production
+Open [http://localhost:3000](http://localhost:3000).
 
-To build this application for production:
-
-```bash
-pnpm build
-```
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+### 4b. Full Docker stack (production-like)
 
 ```bash
-pnpm test
+docker compose up -d
 ```
 
-## Styling
+This builds the app image and runs nginx + app + imgproxy together, just like the k3s deployment. Open [http://localhost:3000](http://localhost:3000).
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## google-token.json
 
-### Removing Tailwind CSS
+The app authenticates to Google Sheets using an OAuth token file. Create a Google Cloud project, enable the Sheets API, and generate an OAuth 2.0 refresh token. The file should look like:
 
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `pnpm add @tailwindcss/vite tailwindcss --dev`
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
+```json
+{
+  "client_id": "…",
+  "client_secret": "…",
+  "redirect_uris": ["http://localhost"],
+  "token": "ya29.…",
+  "refresh_token": "1//…"
 }
 ```
 
-## API Routes
+Place it at the path specified by `GOOGLE_TOKEN_PATH` (default: `./google-token.json`). This file is gitignored.
 
-You can create API routes by using the `server` property in your route definitions:
+## Project structure
 
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
+```
+src/
+├── components/
+│   ├── ui/button.tsx        # shadcn/ui button
+│   ├── Footer.tsx           # Site footer
+│   └── UploadPage.tsx       # Main page: camera, uploads, saved entries
+├── lib/
+│   ├── ai.ts                # Vision model (reads milk packet labels)
+│   ├── entries-fn.ts        # Server function: fetch all entries
+│   ├── images.ts            # Image save + imgproxy URL generation
+│   ├── process-upload.ts    # Upload pipeline (serialised queue)
+│   ├── sheets.ts            # Google Sheets read/write
+│   ├── upload-fn.ts         # Server function: upload + analyse
+│   └── utils.ts             # Tailwind classname helpers
+├── routes/
+│   ├── __root.tsx           # Root layout (HTML shell, devtools)
+│   ├── index.tsx            # Home page route
+│   └── api/health.ts        # Health check endpoint
+├── router.tsx               # TanStack Router + Query client setup
+├── routeTree.gen.ts         # Auto-generated route tree
+└── styles.css               # Tailwind entry point
 
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
+docker-compose.yml           # Full stack: nginx + app + imgproxy
+docker-compose.dev.yml       # Dev override (app on host, imgproxy in Docker)
+nginx.conf                    # nginx config (mirrors k3s Traefik routing)
+nginx.dev.conf                # nginx config for hybrid dev
+scripts/
+└── generate-imgproxy-keys.sh
+Dockerfile                    # Multi-stage production build
 ```
 
-## Data Fetching
+## Deployment (k3s)
 
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
+The app is deployed to a k3s cluster via FluxCD. The manifests live in a [separate homelab repo](https://github.com/pakatagoh/homelab):
 
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
+```
+homelab/
+├── apps/baby/               # HelmRelease, namespace, image policy
+└── infrastructure/imgproxy/ # imgproxy HelmRelease, namespace
 ```
 
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
+Both services share a hostPath volume (`/mnt/media/images`) and are exposed behind a single Traefik ingress:
 
-# Demo files
+| Path | Service | Port |
+|---|---|---|
+| `/` | baby app | 3000 |
+| `/img` | imgproxy | 8080 |
 
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
+The Docker Compose setup above mirrors this exactly with nginx standing in for Traefik.
 
-# Learn More
+## API
 
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+### `GET /api/health`
 
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+Health check endpoint. Returns `{ "status": "ok", "timestamp": "…" }`.
+
+Also available from imgproxy at `/img/health`.
