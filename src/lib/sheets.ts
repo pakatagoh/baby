@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 // ─── Abstract storage interface ─────────────────────────────────────────────
 
 export interface MilkSheetEntry {
+  rowIndex?: number; // 1-based row in the sheet (set when reading from sheet)
   date: string; // "15-Jul-26"
   time: string; // "19:30"
   amount: number; // 80
@@ -19,6 +20,7 @@ export interface MilkStorageBackend {
   append(entry: MilkSheetEntry): Promise<number>;
   getLatest(): Promise<MilkSheetEntry | null>;
   getAll(): Promise<MilkSheetEntry[]>;
+  update(rowIndex: number, fields: Partial<MilkSheetEntry>): Promise<void>;
 }
 
 // ─── Google Sheets implementation ───────────────────────────────────────────
@@ -107,10 +109,12 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
     const lastRow = rows[rows.length - 1];
     if (!lastRow || lastRow.length < 4) return null;
 
+    const rowIndex = HEADER_ROW + rows.length; // last data row
     const date = String(lastRow[0] || "").replace(/^'/, "");
     const time = String(lastRow[1] || "").replace(/^'/, "");
 
     return {
+      rowIndex,
       date,
       time,
       amount: Number(lastRow[2]) || 0,
@@ -134,9 +138,10 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
 
     const rows = result.data.values || [];
     const entries: MilkSheetEntry[] = [];
-    for (const row of rows) {
+    for (const [i, row] of rows.entries()) {
       if (!row || row.length < 4) continue;
       entries.push({
+        rowIndex: HEADER_ROW + 1 + i, // row 2, 3, 4, ...
         date: String(row[0] || "").replace(/^'/, ""),
         time: String(row[1] || "").replace(/^'/, ""),
         amount: Number(row[2]) || 0,
@@ -148,6 +153,42 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
       });
     }
     return entries;
+  }
+
+  async update(
+    rowIndex: number,
+    fields: Partial<MilkSheetEntry>,
+  ): Promise<void> {
+    const sheetId = requireEnv("GOOGLE_SHEET_ID");
+    const tab = requireEnv("GOOGLE_SHEET_TAB");
+    const sheets = getSheetsClient();
+
+    // Read the existing row so we only overwrite changed columns
+    const existing = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: `'${tab}'!A${rowIndex}:H${rowIndex}`,
+    });
+    const values = existing.data.values?.[0] ?? [];
+
+    const date = fields.date !== undefined ? `'${fields.date}` : values[0];
+    const time = fields.time !== undefined ? `'${fields.time}` : values[1];
+    const amount = fields.amount ?? values[2];
+    const packets = fields.packets ?? values[3];
+    const totalFrozen = fields.totalFrozen ?? values[4];
+    const totalUsed = fields.totalUsed ?? values[5];
+    const notes = fields.notes ?? values[6];
+    const imageUrl = fields.imageUrl ?? values[7];
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: `'${tab}'!A${rowIndex}:H${rowIndex}`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [
+          [date, time, amount, packets, totalFrozen, totalUsed, notes, imageUrl],
+        ],
+      },
+    });
   }
 }
 
@@ -175,4 +216,11 @@ export async function getLatestEntry(): Promise<MilkSheetEntry | null> {
 
 export async function getAllEntries(): Promise<MilkSheetEntry[]> {
   return backend.getAll();
+}
+
+export async function updateEntry(
+  rowIndex: number,
+  fields: Partial<MilkSheetEntry>,
+): Promise<void> {
+  return backend.update(rowIndex, fields);
 }

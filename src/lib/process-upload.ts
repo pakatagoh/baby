@@ -25,11 +25,18 @@ let chain: Promise<unknown> = Promise.resolve();
 
 export function processUpload(file: File): Promise<UploadResult> {
   const run = chain.then(async () => {
+    console.log("[process-upload] starting saveUpload");
     const { storedPath, optimizedBase64 } = await saveUpload(file, "milk");
+    console.log("[process-upload] saved to:", storedPath, "base64 length:", optimizedBase64.length);
+
     const previewUrl = generateImgproxyUrl(storedPath, 400, 400);
+    console.log("[process-upload] previewUrl:", previewUrl);
 
+    console.log("[process-upload] starting AI analysis");
     const result = await analyzeMilkPacket(optimizedBase64, "image/jpeg");
+    console.log("[process-upload] AI result:", result);
 
+    console.log("[process-upload] appending to sheet");
     await appendToSheet({
       date: result.date,
       time: result.time,
@@ -37,9 +44,10 @@ export function processUpload(file: File): Promise<UploadResult> {
       packets: result.packets,
       totalFrozen: 0,
       totalUsed: 0,
-      notes: result.notes || "",
+      notes: "",
       imageUrl: previewUrl,
     });
+    console.log("[process-upload] sheet append done");
 
     return { previewUrl, result };
   });
