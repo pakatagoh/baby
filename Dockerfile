@@ -8,6 +8,9 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
+# Cache-bust: ARG forces BuildKit to re-run this layer on every push,
+# preventing stale SSR asset hashes from being reused.
+ARG CACHE_BUST=0
 RUN rm -rf node_modules/.vite .output && pnpm build
 
 # ─── Production stage ─────────────────────────────────────────
