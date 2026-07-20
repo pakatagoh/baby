@@ -1,7 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-/* bust cache: 2026-07-20 */
+
+/* Force cache bust — Tailwind strips comments, so this actual rule
+   changes the output hash to break the Docker BuildKit cache. */
+._cache_bust_2026_07_20 {
+  display: block;
+}
 
 @plugin "@tailwindcss/typography";
 
