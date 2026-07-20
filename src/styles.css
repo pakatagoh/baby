@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* bust cache: 2026-07-20 */
 
 @plugin "@tailwindcss/typography";
 
