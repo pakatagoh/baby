@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui
 import { X } from "lucide-react";
 import { updateEntry } from "@/lib/update-entry-fn";
 import { getExpiryDate } from "@/lib/expiry";
+import { generateImgproxySrcSet, parseStoredPathFromUrl } from "@/lib/images";
 import type { MilkSheetEntry } from "@/lib/sheets";
 
 interface EntryCardProps {
@@ -73,6 +74,17 @@ export function EntryCard({ entry }: EntryCardProps) {
   const [notes, setNotes] = useState(entry.notes || "");
   const [saving, setSaving] = useState(false);
 
+  // Pre-compute responsive image srcsets from the stored imgproxy URL.
+  const imageSrcSets = useMemo(() => {
+    if (!entry.imageUrl) return null;
+    const storedPath = parseStoredPathFromUrl(entry.imageUrl);
+    if (!storedPath) return null;
+    return {
+      thumb: generateImgproxySrcSet(storedPath, [64, 128, 256]),
+      lightbox: generateImgproxySrcSet(storedPath, [384, 768, 1152]),
+    };
+  }, [entry.imageUrl]);
+
   function openModal() {
     setDate(toDateInput(entry.date));
     setTime(entry.time);
@@ -123,6 +135,8 @@ export function EntryCard({ entry }: EntryCardProps) {
         {entry.imageUrl ? (
           <img
             src={entry.imageUrl}
+            srcSet={imageSrcSets?.thumb}
+            sizes="64px"
             alt={`Milk packet ${entry.date} ${entry.time}`}
             className="h-16 w-16 shrink-0 rounded-md bg-muted object-cover"
             onError={(e) => {
@@ -166,6 +180,8 @@ export function EntryCard({ entry }: EntryCardProps) {
             {entry.imageUrl ? (
               <img
                 src={entry.imageUrl}
+                srcSet={imageSrcSets?.lightbox}
+                sizes="384px"
                 alt={`Milk packet ${entry.date} ${entry.time}`}
                 className="max-h-[50vh] w-full object-contain"
               />

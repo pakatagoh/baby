@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import type { MilkPacketResult } from "@/lib/ai";
 import { Loader2, CheckCircle2, AlertCircle, RotateCcw } from "lucide-react";
+import { generateImgproxySrcSet, parseStoredPathFromUrl } from "@/lib/images";
 
 export interface PendingEntry {
   id: string;
@@ -26,11 +27,19 @@ function Thumbnail({
   const [imgFailed, setImgFailed] = useState(false);
   const showImg = previewUrl && !imgFailed;
 
+  const thumbSrcSet = useMemo(() => {
+    const storedPath = parseStoredPathFromUrl(previewUrl);
+    if (!storedPath) return undefined;
+    return generateImgproxySrcSet(storedPath, [64, 128, 256]);
+  }, [previewUrl]);
+
   return (
     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
       {showImg && (
         <img
           src={previewUrl}
+          srcSet={thumbSrcSet}
+          sizes="64px"
           alt="Milk packet"
           className="h-full w-full object-cover"
           onError={() => setImgFailed(true)}

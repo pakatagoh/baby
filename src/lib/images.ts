@@ -73,3 +73,24 @@ export function generateImgproxyUrl(
 
   return `${IMGPROXY_BASE}/${signature}${unsigned}`;
 }
+
+/** Extract the storedPath from an imgproxy signed URL. */
+export function parseStoredPathFromUrl(url: string): string | null {
+  const marker = "/plain/local:///";
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.slice(idx + marker.length);
+}
+
+/** Generate a srcset string with multiple resolutions for the same stored image. */
+export function generateImgproxySrcSet(
+  storedPath: string,
+  widths: number[],
+): string {
+  return widths
+    .map((w) => {
+      const url = generateImgproxyUrl(storedPath, w, w);
+      return `${url} ${w}w`;
+    })
+    .join(", ");
+}
