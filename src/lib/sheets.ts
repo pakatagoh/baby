@@ -81,7 +81,8 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
             `'${entry.time}`,
             entry.amount,
             entry.packets,
-            entry.totalFrozen,
+            // Total frozen = packets - total used (formula, not static value)
+            `=D${nextRow}-F${nextRow}`,
             entry.totalUsed,
             entry.notes,
             entry.imageUrl,
@@ -174,7 +175,7 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
     const time = fields.time !== undefined ? `'${fields.time}` : values[1];
     const amount = fields.amount ?? values[2];
     const packets = fields.packets ?? values[3];
-    const totalFrozen = fields.totalFrozen ?? values[4];
+    const totalFrozen = `=D${rowIndex}-F${rowIndex}`; // always formula
     const totalUsed = fields.totalUsed ?? values[5];
     const notes = fields.notes ?? values[6];
     const imageUrl = fields.imageUrl ?? values[7];
