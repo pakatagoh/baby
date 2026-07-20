@@ -8,7 +8,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm build
+RUN rm -rf node_modules/.vite .output && pnpm build
 
 # ─── Production stage ─────────────────────────────────────────
 FROM node:22-alpine
