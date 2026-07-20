@@ -100,6 +100,7 @@ export function StorageSummary({ entries }: StorageSummaryProps) {
                 </span>
               </p>
               <p className="text-muted-foreground">
+                In {formatExpiryMonth(stats.nextMonthKey)}:{" "}
                 {stats.nextMonth.packets} packets · {stats.nextMonth.ml} ml
               </p>
               <p className="text-xs text-muted-foreground">
