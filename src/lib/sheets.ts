@@ -175,6 +175,8 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
     const entries: MilkSheetEntry[] = [];
     for (const [i, row] of rows.entries()) {
       if (!row || row.length < 4) continue;
+      // Skip rows with no date — empty rows or checkbox-only rows
+      if (!row[0] || String(row[0]).trim() === "") continue;
       entries.push({
         rowIndex: HEADER_ROW + 1 + i, // row 2, 3, 4, ...
         id: String(row[8] || ""),
