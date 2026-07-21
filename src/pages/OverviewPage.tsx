@@ -19,7 +19,7 @@ import {
 } from "@/components/AdvancedFilters";
 import { StorageSummary } from "@/components/StorageSummary";
 
-export function UploadPage() {
+export function OverviewPage() {
   const queryClient = useQueryClient();
   const { data: savedEntries = [], error: loadError } = useQuery({
     queryKey: ["entries"],

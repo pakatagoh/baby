@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { UploadPage } from "@/components/UploadPage";
+import { OverviewPage } from "@/pages/OverviewPage";
 import { getEntries } from "@/lib/entries-fn";
 
 export const Route = createFileRoute("/")({
@@ -10,5 +10,5 @@ export const Route = createFileRoute("/")({
       queryKey: ["entries"],
       queryFn: () => getEntries(),
     }),
-  component: UploadPage,
+  component: OverviewPage,
 });
