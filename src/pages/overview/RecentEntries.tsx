@@ -1,5 +1,5 @@
 import type { MilkSheetEntry } from "@/lib/sheets";
-import { getExpiryDate } from "@/lib/expiry";
+import { getExpiryDate, formatExpiryShort } from "@/lib/expiry";
 
 interface RecentEntriesProps {
   entries: MilkSheetEntry[];
@@ -35,7 +35,10 @@ export function RecentEntries({ entries }: RecentEntriesProps) {
                 {entry.amount}ml · {entry.date}
               </p>
               <p className="text-xs text-muted-foreground">
-                Expires {getExpiryDate(entry) ?? "—"}
+                {(() => {
+                  const d = getExpiryDate(entry);
+                  return d ? `Expires ${formatExpiryShort(d)}` : "—";
+                })()}
               </p>
             </div>
           </div>
