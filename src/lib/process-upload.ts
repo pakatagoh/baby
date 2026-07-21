@@ -16,6 +16,13 @@ export interface UploadResult {
   result: MilkPacketResult;
 }
 
+export interface BatchUploadResult {
+  ids: string[];
+  previewUrl: string;
+  srcSetThumb: string;
+  result: MilkPacketResult;
+}
+
 /**
  * Serialize uploads through a single in-process queue.
  *
@@ -70,6 +77,58 @@ export function processUpload(file: File): Promise<UploadResult> {
 
   // Keep the chain alive even if a step rejects, so one failure doesn't stall
   // every subsequent upload.
+  chain = run.catch(() => {});
+  return run;
+}
+
+/**
+ * Batch upload: saves the image once, runs AI analysis once, then appends
+ * N rows (one per packet) to the sheet. Uses the same serialised queue to
+ * prevent row clobber.
+ */
+export function processBatchUpload(
+  file: File,
+  packetCount: number,
+): Promise<BatchUploadResult> {
+  const run = chain.then(async () => {
+    console.log("[process-upload] batch: starting saveUpload");
+    const { storedPath, optimizedBase64 } = await saveUpload(file, "milk");
+    console.log("[process-upload] batch: saved to:", storedPath);
+
+    const previewUrl = generateImgproxyUrl(storedPath, 400, 400);
+    const srcSetThumb = generateImgproxySrcSet(storedPath, [64, 128, 256]);
+    console.log("[process-upload] batch: previewUrl:", previewUrl);
+
+    console.log("[process-upload] batch: starting AI analysis");
+    const result = await analyzeMilkPacket(optimizedBase64, "image/jpeg");
+    console.log("[process-upload] batch: AI result:", result);
+
+    console.log("[process-upload] batch: appending %d rows to sheet", packetCount);
+    const ids: string[] = [];
+    const now = sgtISO();
+    for (let i = 0; i < packetCount; i++) {
+      const { id } = await appendToSheet({
+        id: "",
+        date: result.date,
+        time: result.time,
+        amount: result.amount_ml,
+        packets: 1, // always 1 per row after unrolling
+        totalFrozen: 0,
+        totalUsed: 0,
+        notes: "",
+        imageUrl: previewUrl,
+        createdAt: now,
+        updatedAt: "",
+        used: false,
+        usedAt: "",
+      });
+      ids.push(id);
+    }
+    console.log("[process-upload] batch: sheet done, ids:", ids);
+
+    return { ids, previewUrl, srcSetThumb, result };
+  });
+
   chain = run.catch(() => {});
   return run;
 }

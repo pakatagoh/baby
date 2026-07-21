@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Package, Plus, BarChart3, Settings } from "lucide-react";
 
@@ -17,13 +18,31 @@ const navItems: NavItem[] = [
   { id: "settings", label: "Settings", to: "/settings", icon: <Settings className="size-5" /> },
 ];
 
-export default function BottomNav() {
+interface BottomNavProps {
+  onFileSelected: (file: File) => void;
+}
+
+export default function BottomNav({ onFileSelected }: BottomNavProps) {
   const { location } = useRouterState();
   const pathname = location.pathname;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function isActive(to: string) {
     if (to === "/") return pathname === "/";
     return pathname.startsWith(to);
+  }
+
+  function handleAddClick() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      onFileSelected(file);
+    }
+    // Reset so the same file can be re-selected later
+    e.target.value = "";
   }
 
   return (
@@ -38,6 +57,7 @@ export default function BottomNav() {
             <button
               key={item.id}
               type="button"
+              onClick={handleAddClick}
               className="relative -mt-3 flex size-12 items-center justify-center rounded-full
                          bg-primary text-primary-foreground shadow-lg transition-transform
                          active:scale-95"
@@ -64,6 +84,17 @@ export default function BottomNav() {
           ),
         )}
       </div>
+
+      {/* Hidden file input — triggers native camera / photo library */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileChange}
+        aria-hidden="true"
+      />
     </nav>
   );
 }

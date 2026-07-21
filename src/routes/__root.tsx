@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
 import type { RouterContext } from '../router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import BottomNav from '../components/BottomNav'
+import { UploadModal } from '../components/UploadModal'
 
 import appCss from '../styles.css?url'
 
@@ -69,6 +71,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   return (
     <html lang="en">
       <head>
@@ -76,7 +80,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased">
         <div className="pb-20">{children}</div>
-        <BottomNav />
+        <BottomNav onFileSelected={setSelectedFile} />
+        <UploadModal
+          file={selectedFile}
+          onClose={() => setSelectedFile(null)}
+        />
         <TanStackDevtools
           config={{
             position: 'bottom-right',
