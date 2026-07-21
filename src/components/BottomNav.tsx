@@ -19,9 +19,10 @@ export default function BottomNav() {
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/80
-                 backdrop-blur-lg pb-[env(safe-area-inset-bottom,0px)]"
+                 backdrop-blur-lg h-16 [@media(display-mode:standalone)]:h-20
+                 pb-[env(safe-area-inset-bottom,0px)]"
     >
-      <div className="mx-auto flex h-16 max-w-4xl items-center justify-around px-2">
+      <div className="mx-auto flex h-16 max-w-4xl items-center justify-around px-2 [@media(display-mode:standalone)]:h-20">
         {navItems.map((item) =>
           item.cta ? (
             <button
