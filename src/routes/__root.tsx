@@ -3,7 +3,7 @@ import type { RouterContext } from '../router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import Footer from '../components/Footer'
+import BottomNav from '../components/BottomNav'
 
 import appCss from '../styles.css?url'
 
@@ -75,8 +75,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased">
-        {children}
-        <Footer />
+        <div className="pb-20">{children}</div>
+        <BottomNav />
         <TanStackDevtools
           config={{
             position: 'bottom-right',
