@@ -24,7 +24,7 @@ function CustomTick({ x = 0, y = 0, payload }: CustomTickProps) {
   if (!payload?.value) return null;
   const parts = payload.value.split(" ");
   return (
-    <g transform={`translate(${x},${y})`}>
+    <g transform={`translate(${x},${y + 6})`}>
       <text x={0} y={0} textAnchor="middle" fill="#9ca3af" fontSize={11}>
         {parts[0]}
       </text>
@@ -43,13 +43,14 @@ export function DailyFrozenChart({ data }: DailyFrozenChartProps) {
   return (
     <div className="rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-border/50">
       <p className="mb-3 text-sm font-medium">Daily Frozen (ml)</p>
-      <div className="h-48">
+      <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 8 }}>
+          <BarChart data={data} margin={{ top: 4, right: 0, left: -20, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
             <XAxis
               dataKey="label"
               tick={<CustomTick />}
+              interval={0}
               axisLine={false}
               tickLine={false}
             />
