@@ -9,6 +9,7 @@ import { StorageTabs } from "@/pages/storage/StorageTabs";
 import { StorageEntryCard } from "@/pages/storage/StorageEntryCard";
 import { BatchActionBar } from "@/pages/storage/BatchActionBar";
 import { FilterModal, type FilterState, type NumOp } from "@/pages/storage/FilterModal";
+import { EntryDetailModal } from "@/pages/storage/EntryDetailModal";
 
 type TabId = "all" | "frozen" | "used";
 
@@ -56,6 +57,7 @@ export function StoragePage() {
   const [filter, setFilter] = useState<FilterState>(defaultFilter);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedEntry, setSelectedEntry] = useState<MilkSheetEntry | null>(null);
   const [busy, setBusy] = useState(false);
 
   // ── Derived counts ────────────────────────────────────────────
@@ -182,9 +184,7 @@ export function StoragePage() {
               entry={entry}
               checked={selectedIds.has(entry.id)}
               onToggle={() => toggleSelect(entry.id)}
-              onOpenDetail={() => {
-                // Open EntryCard modal — reuse existing EntryCard pattern
-              }}
+              onOpenDetail={() => setSelectedEntry(entry)}
             />
           ))
         )}
@@ -199,6 +199,13 @@ export function StoragePage() {
         onClose={() => setFilterOpen(false)}
         filter={filter}
         onApply={setFilter}
+      />
+
+      {/* Entry detail modal */}
+      <EntryDetailModal
+        entry={selectedEntry}
+        open={selectedEntry !== null}
+        onClose={() => setSelectedEntry(null)}
       />
     </main>
   );

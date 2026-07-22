@@ -1,6 +1,7 @@
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { getExpiryDate } from "@/lib/expiry";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ChevronRight } from "lucide-react";
 
 interface StorageEntryCardProps {
   entry: MilkSheetEntry;
@@ -91,6 +92,10 @@ export function StorageEntryCard({ entry, checked, onToggle, onOpenDetail }: Sto
             className="size-5"
           />
         </div>
+      )}
+      {/* Chevron hint for used entries (no checkbox) */}
+      {isUsed && (
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground/40" />
       )}
     </div>
   );
