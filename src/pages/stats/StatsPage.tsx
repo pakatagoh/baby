@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getEntries } from "@/lib/entries-fn";
 import { PeriodSummaryCard } from "@/pages/stats/PeriodSummaryCard";
 import { DailyFrozenChart } from "@/pages/stats/DailyFrozenChart";
+import { MonthlyFrozenChart } from "@/pages/stats/MonthlyFrozenChart";
 
 function parseSheetDate(s: string): number {
   const m = s.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
@@ -52,6 +53,7 @@ export function StatsPage() {
 
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
+  const [halfYearOffset, setHalfYearOffset] = useState(0);
 
   const weekMonday = useMemo(() => getWeekMonday(weekOffset), [weekOffset]);
   const monthStart = useMemo(() => getMonthStart(monthOffset), [monthOffset]);
@@ -143,11 +145,50 @@ export function StatsPage() {
     return `Daily Frozen · ${fmt(weekMonday)} – ${fmt(sun)}`;
   }, [weekMonday]);
 
+  // ── Monthly frozen (half-year window) ─────────────────────────
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+
+  const { monthlyData, halfYearLabel } = useMemo(() => {
+    const now = new Date();
+    // Current half: Jan-Jun if month ≤ 5, else Jul-Dec
+    const currentHalfStart = now.getMonth() < 6 ? 0 : 6;
+    const halfStartMonth = currentHalfStart + halfYearOffset * 6;
+
+    // Compute the year for this half
+    const halfYear = now.getFullYear() + Math.floor((now.getMonth() + halfYearOffset * 6) / 12);
+
+    const monthly: Record<string, number> = {};
+    for (let i = 0; i < 6; i++) {
+      const mIdx = (halfStartMonth + i + 12) % 12;
+      const mYear = halfYear + Math.floor((halfStartMonth + i) / 12);
+      monthly[`${MONTHS[mIdx]} ${mYear}`] = 0;
+    }
+
+    for (const e of entries) {
+      const freezeMs = parseSheetDate(e.date);
+      if (Number.isNaN(freezeMs)) continue;
+      const d = new Date(freezeMs);
+      const key = `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+      if (monthly[key] !== undefined) {
+        monthly[key] += e.amount;
+      }
+    }
+
+    const data = Object.entries(monthly).map(([month, ml]) => ({ month, ml }));
+    const first = data[0]?.month ?? "";
+    const last = data[data.length - 1]?.month ?? "";
+    const label = `Monthly Frozen · ${first} – ${last}`;
+
+    return { monthlyData: data, halfYearLabel: label };
+  }, [entries, halfYearOffset]);
+
   // ── Navigation callbacks ────────────────────────────────────
   const prevWeek = useCallback(() => setWeekOffset((o) => o - 1), []);
   const nextWeek = useCallback(() => setWeekOffset((o) => o + 1), []);
   const prevMonth = useCallback(() => setMonthOffset((o) => o - 1), []);
   const nextMonth = useCallback(() => setMonthOffset((o) => o + 1), []);
+  const prevHalfYear = useCallback(() => setHalfYearOffset((o) => o - 1), []);
+  const nextHalfYear = useCallback(() => setHalfYearOffset((o) => o + 1), []);
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
@@ -181,6 +222,14 @@ export function StatsPage() {
         data={dailyData}
         onPrev={prevWeek}
         onNext={nextWeek}
+      />
+
+      {/* Monthly chart */}
+      <MonthlyFrozenChart
+        title={halfYearLabel}
+        data={monthlyData}
+        onPrev={prevHalfYear}
+        onNext={nextHalfYear}
       />
     </main>
   );
