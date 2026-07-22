@@ -36,9 +36,7 @@ export function StorageEntryCard({ entry, checked, onToggle, onOpenDetail }: Sto
 
   return (
     <div
-      className={`flex cursor-pointer items-center gap-3 rounded-lg border border-l-4 p-3 transition-colors ${
-        checked ? "bg-accent" : "bg-card hover:bg-accent/50"
-      } ${
+      className={`flex cursor-pointer items-center gap-3 rounded-lg border border-l-4 p-3 transition-colors hover:bg-accent/50 ${
         isUsed ? "border-l-gray-400" : "border-l-sky-500"
       }`}
       onClick={onOpenDetail}
