@@ -51,7 +51,7 @@ export default function BottomNav({ onFileSelected }: BottomNavProps) {
                  backdrop-blur-lg h-16 [@media(display-mode:standalone)]:h-24
                  pb-[env(safe-area-inset-bottom,0px)]"
     >
-      <div className="mx-auto flex h-16 max-w-4xl items-center justify-around px-2 [@media(display-mode:standalone)]:h-24">
+      <div className="mx-auto flex h-16 max-w-4xl items-center justify-around px-2 [@media(display-mode:standalone)]:h-24 [@media(display-mode:standalone)]:items-start [@media(display-mode:standalone)]:pt-2">
         {navItems.map((item) =>
           item.cta ? (
             <button
