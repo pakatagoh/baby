@@ -3,16 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getEntries } from "@/lib/entries-fn";
 import { updateEntry } from "@/lib/update-entry-fn";
-import { getExpiryDate } from "@/lib/expiry";
 import type { MilkSheetEntry } from "@/lib/sheets";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { StorageTabs } from "@/pages/storage/StorageTabs";
 import { StorageEntryCard } from "@/pages/storage/StorageEntryCard";
 import { BatchActionBar } from "@/pages/storage/BatchActionBar";
 import { FilterModal, type FilterState, type NumOp } from "@/pages/storage/FilterModal";
 
 type TabId = "all" | "frozen" | "used";
-type SortBy = "expiry" | "date";
 
 function parseSheetDate(s: string): number {
   const m = s.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
@@ -26,12 +24,6 @@ function entryTimestamp(e: MilkSheetEntry): number {
   if (Number.isNaN(dateMs)) return 0;
   const [h = "0", m = "0"] = (e.time || "").split(":");
   return dateMs + Number(h) * 3_600_000 + Number(m) * 60_000;
-}
-
-function expiryTimestamp(e: MilkSheetEntry): number {
-  const d = getExpiryDate(e);
-  if (!d) return Infinity;
-  return parseSheetDate(d);
 }
 
 function matchesNumFilter(value: number, op: NumOp, raw: string): boolean {
@@ -60,7 +52,7 @@ export function StoragePage() {
   });
 
   const [activeTab, setActiveTab] = useState<TabId>("frozen");
-  const [sortBy, setSortBy] = useState<SortBy>("expiry");
+  const [sortAsc, setSortAsc] = useState(false); // false = newest first
   const [filter, setFilter] = useState<FilterState>(defaultFilter);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -101,14 +93,13 @@ export function StoragePage() {
     });
   }, [tabbedEntries, filter]);
 
-  // ── Sort ──────────────────────────────────────────────────────
+  // ── Sort by frozen date+time (createdAt fallback) ──────────────
   const sortedEntries = useMemo(() => {
-    const sorted = [...filteredEntries].sort((a, b) => {
-      if (sortBy === "expiry") return expiryTimestamp(a) - expiryTimestamp(b);
-      return entryTimestamp(a) - entryTimestamp(b);
-    });
-    return sorted;
-  }, [filteredEntries, sortBy]);
+    const sorted = [...filteredEntries].sort(
+      (a, b) => entryTimestamp(a) - entryTimestamp(b),
+    );
+    return sortAsc ? sorted : sorted.reverse();
+  }, [filteredEntries, sortAsc]);
 
   // ── Selection ─────────────────────────────────────────────────
   const toggleSelect = useCallback((id: string) => {
@@ -155,18 +146,15 @@ export function StoragePage() {
       />
 
       {/* Sort + Filter row */}
-      <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <span>Sort by:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="bg-transparent font-medium text-foreground outline-none"
-          >
-            <option value="expiry">Expiry Date (Soonest)</option>
-            <option value="date">Date (Newest)</option>
-          </select>
-        </div>
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setSortAsc((prev) => !prev)}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowUpDown className="size-3.5" />
+          {sortAsc ? "Oldest first" : "Newest first"}
+        </button>
         <button
           type="button"
           onClick={() => setFilterOpen(true)}
