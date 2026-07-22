@@ -10,16 +10,11 @@ interface ExpiryTimelineProps {
   buckets: TimelineBucket[];
 }
 
-/** Generate a lighter shade of the primary peach using color-mix() */
-function shade(lightness: number): string {
-  return `color-mix(in srgb, #b07a6a, white ${lightness}%)`;
-}
-
-const URGENCY_SHADE: Record<string, number> = {
-  red: 0,    // ≤1 week: pure peach — most urgent
-  orange: 20, // 1-2 weeks
-  amber: 50,  // 2-4 weeks
-  green: 75,  // 1-3 months: pale peach — least urgent
+const COLOR_CLASS: Record<string, string> = {
+  red: "bg-[#b07a6a]",   // ≤1 week: pure peach
+  orange: "bg-[#c09588]", // 1-2 weeks
+  amber: "bg-[#d8bdb5]",  // 2-4 weeks
+  green: "bg-[#ebdeda]",  // 1-3 months: pale peach
 };
 
 export function ExpiryTimeline({ buckets }: ExpiryTimelineProps) {
@@ -43,11 +38,10 @@ export function ExpiryTimeline({ buckets }: ExpiryTimelineProps) {
               </div>
               <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
                 <div
-                  className="h-full rounded-full transition-[width] duration-700 ease-out"
-                  style={{
-                    width: `${Math.max(pct, b.bags > 0 ? 5 : 0)}%`,
-                    backgroundColor: shade(URGENCY_SHADE[b.color] ?? 50),
-                  }}
+                  className={`h-full rounded-full transition-[width] duration-700 ease-out ${
+                    b.bags > 0 ? COLOR_CLASS[b.color] : ""
+                  }`}
+                  style={{ width: `${Math.max(pct, b.bags > 0 ? 5 : 0)}%` }}
                 />
               </div>
             </div>
