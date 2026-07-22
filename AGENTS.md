@@ -29,14 +29,32 @@ saved + logged to a Google Sheet. Optimized images are served on the fly via
 ```
 src/
 ├── components/
-│   ├── ui/button.tsx              # shadcn/ui button (the only shadcn component so far)
-│   ├── SnapMilkPacketButton.tsx   # Camera button + hidden file input
-│   ├── PendingUploadList.tsx      # In-flight uploads (processing/done/error)
-│   ├── StatusFilterChips.tsx      # "Active" / "Completed" / "All" + Filters toggle
-│   ├── AdvancedFilters.tsx        # Expandable date/amount/packets filter panel
-│   ├── EntryCard.tsx              # Single saved milk-packet row
-│   ├── UploadPage.tsx             # Main page — orchestrates all of the above
-│   └── Footer.tsx                 # Site footer
+│   ├── ui/                        # shadcn/ui primitives (button, dialog, dropdown-menu, etc.)
+│   ├── BottomNav.tsx              # Fixed bottom navigation bar
+│   ├── UploadModal.tsx            # Photo upload modal (preview → upload → result)
+│   └── ...                        # Other shared components used across multiple pages
+├── pages/                         # Page-specific components colocated with their page
+│   ├── overview/
+│   │   ├── OverviewPage.tsx
+│   │   ├── TotalFrozenCard.tsx
+│   │   ├── StatsGrid.tsx
+│   │   ├── ExpiryTimeline.tsx
+│   │   └── RecentEntries.tsx
+│   ├── storage/
+│   │   ├── StoragePage.tsx
+│   │   ├── StorageTabs.tsx
+│   │   ├── StorageEntryCard.tsx
+│   │   ├── SortDropdown.tsx
+│   │   ├── BatchActionBar.tsx
+│   │   ├── FilterModal.tsx
+│   │   └── EntryDetailModal.tsx
+│   ├── stats/
+│   │   ├── StatsPage.tsx
+│   │   ├── PeriodSummaryCard.tsx
+│   │   ├── DailyFrozenChart.tsx
+│   │   └── MonthlyFrozenChart.tsx
+│   └── settings/
+│       └── SettingsPage.tsx
 ├── lib/
 │   ├── ai.ts                      # Vision model: analyzeMilkPacket(base64) → {date,time,amount,packets,notes}
 │   ├── images.ts                  # saveUpload() + generateImgproxyUrl() (HMAC-signed)
@@ -47,7 +65,7 @@ src/
 │   └── utils.ts                   # cn() / clsx tailwind-merge helper
 ├── routes/
 │   ├── __root.tsx                 # Root layout: <html> shell, HeadContent, devtools, Footer
-│   ├── index.tsx                  # Home: prefetches entries, renders <UploadPage>
+│   ├── index.tsx                  # Home: prefetches entries, renders <OverviewPage>
 │   └── api/health.ts             # GET /api/health → { status: "ok", timestamp }
 ├── router.tsx                     # createRouter + QueryClient setup + SSR integration
 ├── routeTree.gen.ts              # Auto-generated route tree (DO NOT EDIT — run `pnpm generate-routes`)
@@ -136,6 +154,34 @@ encoded). The Docker Compose setup ensures this via the shared `.env` file.
 
 URL format: `{base}/{signature}/{processing}/plain/{source}`
 Example: `http://localhost:3000/img/AbCdEf.../rs:fit:400:0/plain/local:///images/originals/milk/2026-07/abc.jpg`
+
+### Component colocation
+
+**Page-specific components live alongside their page** in `src/pages/<name>/`,
+not in `src/components/`. Each page folder is a self-contained module: the page
+component itself plus all sub-components used only by that page.
+
+```
+src/pages/storage/
+├── StoragePage.tsx          ← page component (owns state, composes children)
+├── StorageTabs.tsx          ← sub-component (takes props, renders UI)
+├── StorageEntryCard.tsx     ← sub-component
+├── SortDropdown.tsx         ← sub-component
+├── BatchActionBar.tsx       ← sub-component
+├── FilterModal.tsx          ← sub-component
+└── EntryDetailModal.tsx     ← sub-component
+```
+
+**Shared components** that are used across multiple pages belong in
+`src/components/`. Examples: `BottomNav.tsx`, `UploadModal.tsx`.
+
+**shadcn/ui primitives** always go in `src/components/ui/` (installed via
+`pnpm dlx shadcn@latest add <name>`).
+
+**Props convention:** Sub-components use a named interface (e.g.
+`SortDropdownProps`), typed props destructuring, and a named export. Types
+that are unique to the component (like `SortKey`) are defined and exported
+from the component file itself — not hoisted to the page.
 
 ### TypeScript conventions
 
