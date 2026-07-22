@@ -15,6 +15,18 @@ function parseSheetDate(s: string): number {
   return d.getTime();
 }
 
+/** Sortable timestamp: date + time, falling back to createdAt if time missing. */
+function entryTimestamp(e: MilkSheetEntry): number {
+  const dateMs = parseSheetDate(e.date);
+  if (Number.isNaN(dateMs)) {
+    // Fall back to createdAt ISO datetime
+    const created = Date.parse(e.createdAt);
+    return Number.isNaN(created) ? 0 : created;
+  }
+  const [h = "0", m = "0"] = (e.time || "").split(":");
+  return dateMs + Number(h) * 3_600_000 + Number(m) * 60_000;
+}
+
 function daysUntilExpiry(entry: MilkSheetEntry): number {
   const freezeMs = parseSheetDate(entry.date);
   if (Number.isNaN(freezeMs)) return Infinity;
@@ -79,15 +91,10 @@ export function OverviewPage() {
     return buckets.map((b) => ({ ...b, maxBags }));
   }, [activeEntries]);
 
-  // Recent entries: last 3 by date+time descending
+  // Recent entries: last 3 by date+time descending (createdAt fallback)
   const recentEntries = useMemo(() => {
     return [...entries]
-      .sort((a, b) => {
-        const aTs = parseSheetDate(a.date);
-        const bTs = parseSheetDate(b.date);
-        if (!Number.isNaN(aTs) && !Number.isNaN(bTs)) return bTs - aTs;
-        return 0;
-      })
+      .sort((a, b) => entryTimestamp(b) - entryTimestamp(a))
       .slice(0, 3);
   }, [entries]);
 
