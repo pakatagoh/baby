@@ -79,7 +79,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased">
-        <div className="pb-20">{children}</div>
+        <div className="pb-20 [@media(display-mode:standalone)]:pb-28">{children}</div>
         <BottomNav onFileSelected={setSelectedFile} />
         <UploadModal
           file={selectedFile}
