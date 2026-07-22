@@ -79,7 +79,7 @@ export default function BottomNav({ onFileSelected }: BottomNavProps) {
               aria-current={isActive(item.to) ? "page" : undefined}
             >
               {item.icon}
-              <span className="text-[10px] font-medium leading-none">{item.label}</span>
+              <span className="text-[10px] font-medium leading-none [@media(display-mode:standalone)]:text-xs">{item.label}</span>
             </Link>
           ),
         )}
