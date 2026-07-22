@@ -4,7 +4,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { getEntries } from "@/lib/entries-fn";
 import { updateEntry } from "@/lib/update-entry-fn";
 import type { MilkSheetEntry } from "@/lib/sheets";
-import { SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { SlidersHorizontal, ArrowUpDown, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StorageTabs } from "@/pages/storage/StorageTabs";
 import { StorageEntryCard } from "@/pages/storage/StorageEntryCard";
 import { BatchActionBar } from "@/pages/storage/BatchActionBar";
@@ -12,6 +20,14 @@ import { FilterModal, type FilterState, type NumOp } from "@/pages/storage/Filte
 import { EntryDetailModal } from "@/pages/storage/EntryDetailModal";
 
 type TabId = "all" | "frozen" | "used";
+type SortKey = "newest" | "oldest" | "largest" | "least";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  largest: "Largest amount",
+  least: "Least amount",
+};
 
 function parseSheetDate(s: string): number {
   const m = s.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
@@ -53,7 +69,7 @@ export function StoragePage() {
   });
 
   const [activeTab, setActiveTab] = useState<TabId>("frozen");
-  const [sortAsc, setSortAsc] = useState(false); // false = newest first
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [filter, setFilter] = useState<FilterState>(defaultFilter);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -95,13 +111,22 @@ export function StoragePage() {
     });
   }, [tabbedEntries, filter]);
 
-  // ── Sort by frozen date+time (createdAt fallback) ──────────────
+  // ── Sort ──────────────────────────────────────────────────────
   const sortedEntries = useMemo(() => {
-    const sorted = [...filteredEntries].sort(
-      (a, b) => entryTimestamp(a) - entryTimestamp(b),
-    );
-    return sortAsc ? sorted : sorted.reverse();
-  }, [filteredEntries, sortAsc]);
+    const sorted = [...filteredEntries].sort((a, b) => {
+      switch (sortKey) {
+        case "newest":
+          return entryTimestamp(b) - entryTimestamp(a);
+        case "oldest":
+          return entryTimestamp(a) - entryTimestamp(b);
+        case "largest":
+          return b.amount - a.amount;
+        case "least":
+          return a.amount - b.amount;
+      }
+    });
+    return sorted;
+  }, [filteredEntries, sortKey]);
 
   // ── Selection ─────────────────────────────────────────────────
   const toggleSelect = useCallback((id: string) => {
@@ -149,14 +174,30 @@ export function StoragePage() {
 
       {/* Sort + Filter row */}
       <div className="flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => setSortAsc((prev) => !prev)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowUpDown className="size-3.5" />
-          {sortAsc ? "Oldest first" : "Newest first"}
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowUpDown className="size-3.5" />
+              {SORT_LABELS[sortKey]}
+              <ChevronDown className="size-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-44">
+            <DropdownMenuRadioGroup
+              value={sortKey}
+              onValueChange={(v) => setSortKey(v as SortKey)}
+            >
+              <DropdownMenuRadioItem value="newest">Newest first</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="oldest">Oldest first</DropdownMenuRadioItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioItem value="largest">Largest amount</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="least">Least amount</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           type="button"
           onClick={() => setFilterOpen(true)}
