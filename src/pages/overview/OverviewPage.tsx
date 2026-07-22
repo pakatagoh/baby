@@ -69,27 +69,16 @@ export function OverviewPage() {
     [activeEntries],
   );
 
-  // Timeline buckets
+  // Timeline buckets — hardcoded for preview (remove after review)
   const timelineBuckets = useMemo(() => {
-    const buckets = [
-      { label: "Within 1 week", color: "red", daysMax: 7, bags: 0, ml: 0 },
-      { label: "1–2 weeks", color: "orange", daysMax: 14, bags: 0, ml: 0 },
-      { label: "2–4 weeks", color: "amber", daysMax: 30, bags: 0, ml: 0 },
-      { label: "1–3 months", color: "green", daysMax: 90, bags: 0, ml: 0 },
+    const maxBags = 10;
+    return [
+      { label: "Within 1 week", color: "red",  bags: 2, ml: 180, maxBags },
+      { label: "1–2 weeks",     color: "orange", bags: 3, ml: 300, maxBags },
+      { label: "2–4 weeks",     color: "amber", bags: 4, ml: 420, maxBags },
+      { label: "1–3 months",    color: "green", bags: 5, ml: 500, maxBags },
     ];
-
-    for (const e of activeEntries) {
-      const days = daysUntilExpiry(e);
-      const bucket = buckets.find((b) => days <= b.daysMax);
-      if (bucket) {
-        bucket.bags += 1;
-        bucket.ml += e.amount;
-      }
-    }
-
-    const maxBags = Math.max(...buckets.map((b) => b.bags), 1);
-    return buckets.map((b) => ({ ...b, maxBags }));
-  }, [activeEntries]);
+  }, []);
 
   // Recent entries: last 3 by date+time descending (createdAt fallback)
   const recentEntries = useMemo(() => {
