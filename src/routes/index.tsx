@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OverviewPage } from "@/pages/overview/OverviewPage";
 import { getEntries } from "@/lib/entries-fn";
+import { getBabyProfile } from "@/lib/baby-profile-fn";
 
 export const Route = createFileRoute("/")({
-  // Prefetch the sheet rows during SSR (and on hover, via defaultPreload) so
-  // the list is present on first paint with no loading flash.
-  loader: ({ context }) =>
+  loader: ({ context }) => {
     context.queryClient.prefetchQuery({
       queryKey: ["entries"],
       queryFn: () => getEntries(),
-    }),
+    });
+    context.queryClient.prefetchQuery({
+      queryKey: ["babyProfile"],
+      queryFn: () => getBabyProfile(),
+    });
+  },
   component: OverviewPage,
 });
