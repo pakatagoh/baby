@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MilkBottlePlaceholder } from "@/components/svg/MilkBottlePlaceholder";
 import { updateEntry } from "@/lib/update-entry-fn";
+import { deleteMilkEntry } from "@/lib/delete-entry-fn";
 import { getExpiryDate } from "@/lib/expiry";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { X } from "lucide-react";
@@ -23,12 +24,15 @@ interface EntryDetailModalProps {
 export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps) {
   const queryClient = useQueryClient();
   const updateFn = useServerFn(updateEntry);
+  const deleteFn = useServerFn(deleteMilkEntry);
 
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [amount, setAmount] = useState("");
   const [used, setUsed] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Reset form whenever a new entry is opened
   useEffect(() => {
@@ -37,6 +41,7 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
       setTime(entry.time);
       setAmount(String(entry.amount));
       setUsed(entry.used);
+      setConfirmDelete(false);
     }
   }, [entry?.id, open]);
 
@@ -61,6 +66,23 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
       onClose();
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!entry.rowIndex) return;
+    setDeleting(true);
+    try {
+      await deleteFn({
+        data: {
+          rowIndex: entry.rowIndex,
+          imageUrl: entry.imageUrl || undefined,
+        },
+      });
+      void queryClient.invalidateQueries({ queryKey: ["entries"] });
+      onClose();
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -152,6 +174,37 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
           >
             {saving ? "Saving…" : "Save"}
           </Button>
+        </div>
+
+        {/* Delete */}
+        <div className="border-t px-4 py-3">
+          {confirmDelete ? (
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 bg-red-600 text-white hover:bg-red-700"
+              >
+                {deleting ? "Deleting…" : "Yes, Delete"}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => setConfirmDelete(true)}
+              variant="ghost"
+              className="w-full text-red-600 hover:bg-red-50 hover:text-red-700"
+            >
+              Delete Entry
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

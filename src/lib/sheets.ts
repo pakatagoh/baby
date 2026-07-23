@@ -43,6 +43,7 @@ export interface MilkStorageBackend {
   getLatest(): Promise<MilkSheetEntry | null>;
   getAll(): Promise<MilkSheetEntry[]>;
   update(rowIndex: number, fields: Partial<MilkSheetEntry>): Promise<void>;
+  delete(rowIndex: number): Promise<void>;
 }
 
 // ─── Google Sheets implementation ───────────────────────────────────────────
@@ -78,6 +79,24 @@ function getSheetsClient(): sheets_v4.Sheets {
 }
 
 export class GoogleSheetsBackend implements MilkStorageBackend {
+  // Cache the sheet's internal ID (looked up once from spreadsheet metadata).
+  private _sheetId: number | null = null;
+
+  private async getSheetId(): Promise<number> {
+    if (this._sheetId !== null) return this._sheetId;
+    const sheetId = requireEnv("GOOGLE_SHEET_ID");
+    const tab = requireEnv("GOOGLE_SHEET_TAB");
+    const sheets = getSheetsClient();
+    const ss = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
+    for (const sheet of ss.data.sheets ?? []) {
+      if (sheet.properties?.title === tab) {
+        this._sheetId = sheet.properties.sheetId!;
+        return this._sheetId;
+      }
+    }
+    throw new Error(`Sheet tab "${tab}" not found`);
+  }
+
   async append(entry: MilkSheetEntry): Promise<{ rowIndex: number; id: string }> {
     const sheetId = requireEnv("GOOGLE_SHEET_ID");
     const tab = requireEnv("GOOGLE_SHEET_TAB");
@@ -242,6 +261,29 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
       },
     });
   }
+  async delete(rowIndex: number): Promise<void> {
+    const sheetId = requireEnv("GOOGLE_SHEET_ID");
+    const tabSheetId = await this.getSheetId();
+    const sheets = getSheetsClient();
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: sheetId,
+      requestBody: {
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId: tabSheetId,
+                dimension: "ROWS",
+                startIndex: rowIndex - 1, // 0-based
+                endIndex: rowIndex,       // exclusive
+              },
+            },
+          },
+        ],
+      },
+    });
+  }
 }
 
 // ─── Singleton backend (swap out for testing / future migration) ────────────
@@ -275,4 +317,8 @@ export async function updateEntry(
   fields: Partial<MilkSheetEntry>,
 ): Promise<void> {
   return backend.update(rowIndex, fields);
+}
+
+export async function deleteEntry(rowIndex: number): Promise<void> {
+  return backend.delete(rowIndex);
 }
