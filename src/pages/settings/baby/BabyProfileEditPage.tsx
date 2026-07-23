@@ -147,26 +147,33 @@ export function BabyProfileEditPage() {
         <fieldset className="block">
           <legend className="mb-1 text-xs font-medium text-muted-foreground">Gender</legend>
           <div className="flex gap-3">
-            {(["male", "female"] as const).map((g) => (
-              <label
-                key={g}
-                className={`flex-1 cursor-pointer rounded-md border px-4 py-2 text-center text-sm transition-colors ${
-                  gender === g
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-input bg-transparent hover:border-gray-800"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="gender"
-                  value={g}
-                  checked={gender === g}
-                  onChange={() => setGender(g)}
-                  className="sr-only"
-                />
-                {g === "male" ? "♂ Male" : "♀ Female"}
-              </label>
-            ))}
+            {(["male", "female"] as const).map((g) => {
+              const isActive = gender === g;
+              const activeClass = g === "male"
+                ? "border-blue-500 bg-blue-500 text-white"
+                : "border-pink-400 bg-pink-400 text-white";
+              return (
+                <label
+                  key={g}
+                  className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-4 py-2 text-sm transition-colors ${
+                    isActive
+                      ? activeClass
+                      : "border-input bg-transparent hover:border-gray-800"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="gender"
+                    value={g}
+                    checked={isActive}
+                    onChange={() => setGender(g)}
+                    className="sr-only"
+                  />
+                  <span className="text-base leading-none">{g === "male" ? "♂" : "♀"}</span>
+                  {g === "male" ? "Male" : "Female"}
+                </label>
+              );
+            })}
           </div>
         </fieldset>
 
