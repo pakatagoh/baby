@@ -37,7 +37,7 @@ export function BabyAvatarPlaceholder({ gender, className }: BabyAvatarPlacehold
       />
 
       {/* Head */}
-      <circle cx="40" cy="32" r="22" fill="#fce5dd" />
+      <circle cx="40" cy="32" r="22" fill="#fce5dd" stroke="#e0c0b0" strokeWidth="1.5" />
 
       {/* Hair tuft */}
       <path
