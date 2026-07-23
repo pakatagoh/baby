@@ -5,14 +5,17 @@ import { getBabyProfile } from "@/lib/baby-profile-fn";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => {
-    context.queryClient.prefetchQuery({
+    const entriesPromise = context.queryClient.prefetchQuery({
       queryKey: ["entries"],
       queryFn: () => getEntries(),
     });
-    context.queryClient.prefetchQuery({
+    // Non-critical — don't crash the page if the Sheets metadata/weight
+    // tabs are unavailable during SSR. The client will retry.
+    const profilePromise = context.queryClient.prefetchQuery({
       queryKey: ["babyProfile"],
       queryFn: () => getBabyProfile(),
-    });
+    }).catch(() => {});
+    return Promise.all([entriesPromise, profilePromise]);
   },
   component: OverviewPage,
 });
