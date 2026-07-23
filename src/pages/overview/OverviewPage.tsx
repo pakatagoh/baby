@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getEntries } from "@/lib/entries-fn";
 import { getExpiryDate, formatExpiryShort } from "@/lib/expiry";
 import type { MilkSheetEntry } from "@/lib/sheets";
-import { TotalFrozenCard } from "@/pages/overview/TotalFrozenCard";
 import { StatsGrid } from "@/pages/overview/StatsGrid";
 import { ExpiryTimeline } from "@/pages/overview/ExpiryTimeline";
 import { RecentEntries } from "@/pages/overview/RecentEntries";
@@ -46,11 +45,6 @@ export function OverviewPage() {
     [entries],
   );
 
-  const totalMl = useMemo(
-    () => activeEntries.reduce((sum, e) => sum + e.amount, 0),
-    [activeEntries],
-  );
-
   const bagCount = activeEntries.length;
 
   // Upcoming expiry: the earliest freezeDate + 3mo among active entries
@@ -89,7 +83,6 @@ export function OverviewPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
-      <TotalFrozenCard totalMl={totalMl} />
       <StatsGrid
         bagCount={bagCount}
         upcomingExpiry={upcomingExpiry}

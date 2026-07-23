@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getEntries } from "@/lib/entries-fn";
 import { updateEntry } from "@/lib/update-entry-fn";
 import type { MilkSheetEntry } from "@/lib/sheets";
+import { TotalFrozenCard } from "@/pages/overview/TotalFrozenCard";
 import { SlidersHorizontal } from "lucide-react";
 import { SortDropdown, type SortKey } from "@/pages/storage/SortDropdown";
 import { StorageTabs } from "@/pages/storage/StorageTabs";
@@ -68,6 +69,10 @@ export function StoragePage() {
   );
   const usedCount = useMemo(
     () => entries.filter((e) => e.used).length,
+    [entries],
+  );
+  const totalMl = useMemo(
+    () => entries.filter((e) => !e.used).reduce((sum, e) => sum + e.amount, 0),
     [entries],
   );
 
@@ -144,6 +149,8 @@ export function StoragePage() {
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
       <h1 className="text-2xl font-bold">📦 Storage</h1>
+
+      <TotalFrozenCard totalMl={totalMl} />
 
       {/* Tabs */}
       <StorageTabs
