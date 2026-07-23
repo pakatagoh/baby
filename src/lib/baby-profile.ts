@@ -9,6 +9,8 @@ export interface BabyProfile {
   lastName: string;
   gender: "male" | "female";
   dateOfBirth: string; // "YYYY-MM-DD"
+  /** imgproxy URL for the baby's profile photo, or null if not set. */
+  imageUrl: string | null;
   /** Latest recorded weight in kg, or null if no entries. */
   latestWeightKg: number | null;
   /** ISO 8601 timestamp of the latest weight reading, or null. */
@@ -45,7 +47,7 @@ function getSheetsClient(): sheets_v4.Sheets {
 async function getMetadata(sheets: sheets_v4.Sheets, sheetId: string) {
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId,
-    range: "'metadata'!A2:F2",
+    range: "'metadata'!A2:G2",
   });
 
   const row = result.data.values?.[0];
@@ -58,6 +60,7 @@ async function getMetadata(sheets: sheets_v4.Sheets, sheetId: string) {
     gender: (String(row[3] || "").toLowerCase() === "female" ? "female" : "male") as "male" | "female",
     dateOfBirth: String(row[4] || ""),
     createdAt: String(row[5] || ""),
+    imageUrl: String(row[6] || "") || null,
   };
 }
 
@@ -107,7 +110,23 @@ export async function fetchBabyProfile(): Promise<BabyProfile | null> {
     lastName: metadata.lastName,
     gender: metadata.gender,
     dateOfBirth: metadata.dateOfBirth,
+    imageUrl: metadata.imageUrl,
     latestWeightKg: weight?.weightKg ?? null,
     latestWeightAt: weight?.createdAt ?? null,
   };
+}
+
+/** Write a profile image URL to the metadata tab (column G, row 2). */
+export async function updateProfileImage(imageUrl: string): Promise<void> {
+  const sheetId = requireEnv("GOOGLE_SHEET_ID");
+  const sheets = getSheetsClient();
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId,
+    range: "'metadata'!G2",
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[imageUrl]],
+    },
+  });
 }

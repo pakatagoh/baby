@@ -12,7 +12,7 @@ const JPEG_QUALITY = 82;
 
 export async function saveUpload(
   file: File,
-  category: "milk" | "general",
+  category: "milk" | "general" | "profile",
 ): Promise<{ storedPath: string; optimizedBase64: string }> {
   const buffer = Buffer.from(await file.arrayBuffer());
   console.log("[images] saveUpload buffer size:", `${(buffer.length / 1024).toFixed(1)} KB`);
