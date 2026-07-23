@@ -1,9 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
+import { unlink } from "node:fs/promises";
+import path from "node:path";
 import { fetchBabyProfile, updateBabyProfile, updateProfileImage } from "./baby-profile";
 import type { BabyProfile, UpdateBabyProfileInput } from "./baby-profile";
 import { saveUpload, generateImgproxyUrl } from "./images";
+import { parseStoredPathFromUrl } from "./imgproxy-url";
 
 export { type BabyProfile } from "./baby-profile";
+
+const ORIGINALS = process.env.IMAGE_ORIGINALS_DIR || "/images/originals";
 
 /** Fetch the baby profile (metadata + latest weight) from Google Sheets. */
 export const getBabyProfile = createServerFn({ method: "GET" }).handler(
@@ -27,7 +32,7 @@ export const saveBabyProfile = createServerFn({ method: "POST" })
     await updateBabyProfile(data);
   });
 
-/** Upload a profile photo: save, compress, generate imgproxy URL, write to sheet. */
+/** Upload a profile photo: delete old, save new, compress, generate imgproxy URL, write to sheet. */
 export const uploadProfilePhoto = createServerFn({ method: "POST" })
   .validator((data: FormData) => {
     const file = data.get("file");
@@ -37,8 +42,21 @@ export const uploadProfilePhoto = createServerFn({ method: "POST" })
     return file;
   })
   .handler(async ({ data: file }) => {
+    // Delete the old profile photo if one exists
+    try {
+      const existing = await fetchBabyProfile();
+      if (existing?.imageUrl) {
+        const oldPath = parseStoredPathFromUrl(existing.imageUrl);
+        if (oldPath) {
+          const fullPath = path.join(ORIGINALS, oldPath);
+          await unlink(fullPath);
+        }
+      }
+    } catch {
+      // Non-critical — proceed with upload even if deletion fails
+    }
+
     const { storedPath } = await saveUpload(file, "profile");
-    // Generate 400×400 square for hero + preview
     const imageUrl = generateImgproxyUrl(storedPath, 400, 400);
     await updateProfileImage(imageUrl);
     return { imageUrl };
