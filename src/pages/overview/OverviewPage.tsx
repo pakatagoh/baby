@@ -75,7 +75,7 @@ export function OverviewPage() {
     return [
       { label: "Within 1 week", color: "red",  bags: 2, ml: 180, maxBags },
       { label: "1–2 weeks",     color: "orange", bags: 3, ml: 300, maxBags },
-      { label: "2–4 weeks",     color: "amber", bags: 4, ml: 420, maxBags },
+      { label: "2–4 weeks",     color: "yellow", bags: 4, ml: 420, maxBags },
       { label: "1–3 months",    color: "green", bags: 5, ml: 500, maxBags },
     ];
   }, []);

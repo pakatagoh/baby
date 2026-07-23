@@ -18,6 +18,10 @@
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-ring: hsl(var(--ring));
+  --color-expiry-red: hsl(var(--expiry-red));
+  --color-expiry-orange: hsl(var(--expiry-orange));
+  --color-expiry-yellow: hsl(var(--expiry-yellow));
+  --color-expiry-green: hsl(var(--expiry-green));
 }
 
 @theme {
@@ -32,20 +36,24 @@
     --card-foreground: 30 10% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 30 10% 15%;
-    --primary: 345 35% 62%;
+    --primary: 10 80% 70%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 345 40% 47%;
+    --secondary: 10 75% 55%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 345 15% 91%;
+    --muted: 16 60% 93%;
     --muted-foreground: 30 5% 45%;
-    --accent: 345 15% 91%;
-    --accent-foreground: 345 30% 27%;
+    --accent: 16 60% 93%;
+    --accent-foreground: 10 50% 30%;
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
     --border: 30 10% 88%;
     --input: 30 10% 88%;
-    --ring: 345 35% 62%;
+    --ring: 10 80% 70%;
     --radius: 0.75rem;
+    --expiry-red: 0 75% 64%;
+    --expiry-orange: 25 86% 66%;
+    --expiry-yellow: 45 86% 62%;
+    --expiry-green: 97 32% 57%;
   }
 }
 

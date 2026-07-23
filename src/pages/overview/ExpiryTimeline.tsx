@@ -10,16 +10,12 @@ interface ExpiryTimelineProps {
   buckets: TimelineBucket[];
 }
 
-/** Generate a lighter shade of the primary rose using color-mix() */
-function shade(lightness: number): string {
-  return `color-mix(in srgb, hsl(var(--primary)), white ${lightness}%)`;
-}
-
-const URGENCY_SHADE: Record<string, number> = {
-  red: 0,    // ≤1 week: pure primary — most urgent
-  orange: 7,  // 1-2 weeks
-  amber: 14,  // 2-4 weeks
-  green: 21,  // 1-3 months: lightest
+/** Map bucket color name to the matching CSS expiry variable */
+const COLOR_VAR: Record<string, string> = {
+  red: "var(--expiry-red)",
+  orange: "var(--expiry-orange)",
+  yellow: "var(--expiry-yellow)",
+  green: "var(--expiry-green)",
 };
 
 export function ExpiryTimeline({ buckets }: ExpiryTimelineProps) {
@@ -46,7 +42,7 @@ export function ExpiryTimeline({ buckets }: ExpiryTimelineProps) {
                   className="h-full rounded-full transition-[width] duration-700 ease-out"
                   style={{
                     width: `${Math.max(pct, b.bags > 0 ? 5 : 0)}%`,
-                    backgroundColor: shade(URGENCY_SHADE[b.color] ?? 50),
+                    backgroundColor: `hsl(${COLOR_VAR[b.color] ?? "var(--expiry-green)"})`,
                   }}
                 />
               </div>
