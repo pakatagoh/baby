@@ -11,6 +11,7 @@ const UpdateEntrySchema = z.object({
   notes: z.string().optional(),
   used: z.boolean().optional(),
   usedAt: z.string().optional(),
+  entryId: z.string().optional(),
 });
 
 export const updateEntry = createServerFn({ method: "POST" })
@@ -20,4 +21,14 @@ export const updateEntry = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { updateEntry } = await import("./sheets");
     await updateEntry(data.rowIndex, data);
+
+    // Log an event when used status is toggled
+    if (data.used !== undefined && data.entryId) {
+      const { appendActivity } = await import("./activity-log");
+      const eventType = data.used ? "entry_used" : "entry_unused";
+      await appendActivity({
+        eventType,
+        frozenMilkEntryId: data.entryId,
+      });
+    }
   });

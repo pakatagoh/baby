@@ -142,7 +142,7 @@ export function StoragePage() {
       const targets = entries.filter((e) => selectedIds.has(e.id) && e.rowIndex);
       await Promise.all(
         targets.map((e) =>
-          updateFn({ data: { rowIndex: e.rowIndex!, used: true, totalUsed: e.packets, usedAt: new Date().toISOString() } }),
+          updateFn({ data: { rowIndex: e.rowIndex!, used: true, totalUsed: e.packets, usedAt: new Date().toISOString(), entryId: e.id } }),
         ),
       );
       void queryClient.invalidateQueries({ queryKey: ["entries"] });
