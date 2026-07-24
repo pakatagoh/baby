@@ -10,10 +10,17 @@ import { StatsGrid } from "@/pages/overview/StatsGrid";
 import { ExpiryTimeline } from "@/pages/overview/ExpiryTimeline";
 import { RecentActivity } from "@/pages/overview/RecentActivity";
 
+const MONTHS: Record<string, number> = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+  Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+};
+
 function parseSheetDate(s: string): number {
-  const m = s.match(/^(\\d{1,2})-(\\w{3})-(\\d{2})$/);
+  const m = s.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
   if (!m) return NaN;
-  const d = new Date(`${m[2]} ${m[1]}, 20${m[3]}`);
+  const month = MONTHS[m[2]];
+  if (month === undefined) return NaN;
+  const d = new Date(2000 + Number(m[3]), month, Number(m[1]));
   return d.getTime();
 }
 
@@ -77,24 +84,11 @@ export function OverviewPage() {
 
     for (const e of activeEntries) {
       const days = daysUntilExpiry(e);
-      // Debug first entry
-      if (activeEntries.indexOf(e) === 0) {
-        const m = e.date.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
-        console.log("[loop] date:", e.date, "regex match:", !!m, "parseSheetDate:", parseSheetDate(e.date), "days:", days);
-      }
       if (days <= 7)            { buckets[0].bags++; buckets[0].ml += e.amount; }
       else if (days <= 14)      { buckets[1].bags++; buckets[1].ml += e.amount; }
       else if (days <= 28)      { buckets[2].bags++; buckets[2].ml += e.amount; }
       else if (days <= 90)      { buckets[3].bags++; buckets[3].ml += e.amount; }
     }
-
-    console.log("[timelineBuckets] activeEntries:", activeEntries.length);
-    if (activeEntries.length > 0) {
-      const sample = activeEntries[0];
-      const match = sample.date.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
-      console.log("[timelineBuckets] regex match:", match);
-    }
-    console.log("[timelineBuckets] buckets:", buckets.map(b => `${b.label}=${b.bags}`).join(", "));
 
     const maxBags = Math.max(...buckets.map((b) => b.bags), 1);
     return buckets.map((b) => ({ ...b, maxBags }));
@@ -109,21 +103,7 @@ export function OverviewPage() {
         upcomingExpiry={upcomingExpiry}
         expiringSoon={expiringSoon}
       />
-      {entries.length > 0 ? (
-        <ExpiryTimeline buckets={timelineBuckets} />
-      ) : (
-        <div className="rounded-lg border bg-card p-4 animate-pulse">
-          <div className="h-4 w-32 rounded bg-muted mb-3" />
-          <div className="space-y-2">
-            {[1,2,3,4].map((i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="h-3 w-20 rounded bg-muted" />
-                <div className="flex-1 h-2 rounded bg-muted" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <ExpiryTimeline buckets={timelineBuckets} />
       <RecentActivity activities={activities} entries={entries} />
     </main>
   );
