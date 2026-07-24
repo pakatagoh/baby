@@ -56,7 +56,6 @@ export function OverviewPage() {
 
   const bagCount = activeEntries.length;
 
-  // Upcoming expiry: the earliest freezeDate + 3mo among active entries
   const upcomingExpiry = useMemo(() => {
     let earliest: string | null = null;
     for (const e of activeEntries) {
@@ -66,13 +65,11 @@ export function OverviewPage() {
     return earliest ? formatExpiryShort(earliest) : null;
   }, [activeEntries]);
 
-  // Expiring soon: active entries where days left ≤ 7
   const expiringSoon = useMemo(
     () => activeEntries.filter((e) => daysUntilExpiry(e) <= 7).length,
     [activeEntries],
   );
 
-  // Timeline buckets — computed from active entries by expiry urgency
   const timelineBuckets = useMemo(() => {
     interface Bucket { label: string; color: string; bags: number; ml: number; }
     const buckets: Bucket[] = [
@@ -90,15 +87,11 @@ export function OverviewPage() {
       else if (days <= 90)      { buckets[3].bags++; buckets[3].ml += e.amount; }
     }
 
-    if (activeEntries.length > 0) {
-      const sample = activeEntries[0];
-      console.log("[fix] activeEntries:", activeEntries.length, "sample date:", sample.date, "parsed:", parseSheetDate(sample.date), "days:", daysUntilExpiry(sample));
-      console.log("[fix] buckets:", buckets.map(b => `${b.label}=${b.bags}`).join(", "));
-    }
-
     const maxBags = Math.max(...buckets.map((b) => b.bags), 1);
     return buckets.map((b) => ({ ...b, maxBags }));
   }, [activeEntries]);
+
+  const hasEntries = entries.length > 0;
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
@@ -109,7 +102,21 @@ export function OverviewPage() {
         upcomingExpiry={upcomingExpiry}
         expiringSoon={expiringSoon}
       />
-      <ExpiryTimeline buckets={timelineBuckets} />
+      {hasEntries ? (
+        <ExpiryTimeline buckets={timelineBuckets} />
+      ) : (
+        <div className="rounded-lg border bg-card p-4 animate-pulse">
+          <div className="h-4 w-32 rounded bg-muted mb-3" />
+          <div className="space-y-2">
+            {[1,2,3,4].map((i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="h-3 w-20 rounded bg-muted" />
+                <div className="flex-1 h-2 rounded bg-muted" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <RecentActivity activities={activities} entries={entries} />
     </main>
   );
