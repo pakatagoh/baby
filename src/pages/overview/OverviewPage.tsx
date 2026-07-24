@@ -83,6 +83,8 @@ export function OverviewPage() {
       else if (days <= 90)      { buckets[3].bags++; buckets[3].ml += e.amount; }
     }
 
+    console.log("[timelineBuckets] activeEntries:", activeEntries.length, "buckets:", buckets.map(b => `${b.label}=${b.bags}`).join(", "));
+
     const maxBags = Math.max(...buckets.map((b) => b.bags), 1);
     return buckets.map((b) => ({ ...b, maxBags }));
   }, [activeEntries]);
