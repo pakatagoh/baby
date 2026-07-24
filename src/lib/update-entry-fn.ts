@@ -25,8 +25,9 @@ export const updateEntry = createServerFn({ method: "POST" })
     // Log an event when used status is toggled
     if (data.used !== undefined && data.entryId) {
       const { appendActivity } = await import("./activity-log");
+      const eventType = data.used ? "entry_used" : "entry_unused";
       await appendActivity({
-        eventType: "entry_updated",
+        eventType,
         frozenMilkEntryId: data.entryId,
       });
     }
