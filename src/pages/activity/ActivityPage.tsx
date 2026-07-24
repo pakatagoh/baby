@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getActivities } from "@/lib/activity-log-fn";
 import { getEntries } from "@/lib/entries-fn";
@@ -21,7 +22,7 @@ function timeAgo(iso: string): string {
 
 function formatActivity(eventType: string, entry?: MilkSheetEntry): string {
   if (entry) {
-    if (eventType === "milk_frozen") return `Froze ${entry.amount} ml`;
+    if (eventType === "milk_frozen") return `Froze ${entry.amount} ml on ${entry.date}`;
     if (eventType === "entry_used") return `Used ${entry.amount} ml`;
     if (eventType === "entry_unused") return `Unused ${entry.amount} ml`;
   }
@@ -61,11 +62,12 @@ export function ActivityPage() {
             const entry = act.frozenMilkEntryId
               ? entryMap.get(act.frozenMilkEntryId)
               : undefined;
-            return (
-              <div
-                key={act.id}
-                className="flex items-center gap-3 rounded-lg border bg-card p-4"
-              >
+            const linkTo = act.frozenMilkEntryId
+              ? ({ to: "/storage/$id" as const, params: { id: act.frozenMilkEntryId } })
+              : null;
+
+            const content = (
+              <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
                   {entry?.imageUrl ? (
                     <img
@@ -86,6 +88,14 @@ export function ActivityPage() {
                   </p>
                 </div>
               </div>
+            );
+
+            return linkTo ? (
+              <Link key={act.id} {...linkTo} className="block transition-colors hover:bg-accent/50 rounded-lg">
+                {content}
+              </Link>
+            ) : (
+              <div key={act.id}>{content}</div>
             );
           })}
         </div>
