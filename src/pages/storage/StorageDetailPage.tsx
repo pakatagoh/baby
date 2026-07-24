@@ -9,6 +9,7 @@ import { MilkBottlePlaceholder } from "@/components/svg/MilkBottlePlaceholder";
 import { updateEntry } from "@/lib/update-entry-fn";
 import { deleteMilkEntry } from "@/lib/delete-entry-fn";
 import { getExpiryDate } from "@/lib/expiry";
+import { formatFrozenDate, formatFrozenTime } from "@/lib/frozen-date";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { ArrowLeft } from "lucide-react";
 
@@ -19,8 +20,8 @@ export function StorageDetailPage({ entry }: { entry: MilkSheetEntry }) {
   const updateFn = useServerFn(updateEntry);
   const deleteFn = useServerFn(deleteMilkEntry);
 
-  const [date, setDate] = useState(entry.date);
-  const [time, setTime] = useState(entry.time);
+  const [date, setDate] = useState(formatFrozenDate(entry));
+  const [time, setTime] = useState(formatFrozenTime(entry));
   const [amount, setAmount] = useState(String(entry.amount));
   const [used, setUsed] = useState(entry.used);
   const [saving, setSaving] = useState(false);
@@ -89,7 +90,7 @@ export function StorageDetailPage({ entry }: { entry: MilkSheetEntry }) {
         {entry.imageUrl ? (
           <img
             src={entry.imageUrl}
-            alt={`Milk packet ${entry.date}`}
+            alt={`Milk packet ${formatFrozenDate(entry)}`}
             className="mx-auto h-64 w-full object-contain"
           />
         ) : (

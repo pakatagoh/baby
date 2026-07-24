@@ -12,6 +12,7 @@ import { MilkBottlePlaceholder } from "@/components/svg/MilkBottlePlaceholder";
 import { updateEntry } from "@/lib/update-entry-fn";
 import { deleteMilkEntry } from "@/lib/delete-entry-fn";
 import { getExpiryDate } from "@/lib/expiry";
+import { formatFrozenDate, formatFrozenTime } from "@/lib/frozen-date";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { X } from "lucide-react";
 
@@ -37,8 +38,8 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
   // Reset form whenever a new entry is opened
   useEffect(() => {
     if (entry && open) {
-      setDate(entry.date);
-      setTime(entry.time);
+      setDate(formatFrozenDate(entry));
+      setTime(formatFrozenTime(entry));
       setAmount(String(entry.amount));
       setUsed(entry.used);
       setConfirmDelete(false);
@@ -105,7 +106,7 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
           {entry.imageUrl ? (
             <img
               src={entry.imageUrl}
-              alt={`Milk packet ${entry.date}`}
+              alt={`Milk packet ${formatFrozenDate(entry)}`}
               className="mx-auto h-64 w-full object-contain"
             />
           ) : (

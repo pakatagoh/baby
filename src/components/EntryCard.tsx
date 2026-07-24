@@ -6,6 +6,7 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui
 import { X } from "lucide-react";
 import { updateEntry } from "@/lib/update-entry-fn";
 import { getExpiryDate } from "@/lib/expiry";
+import { formatFrozenDate, formatFrozenTime } from "@/lib/frozen-date";
 import type { MilkSheetEntry } from "@/lib/sheets";
 
 interface EntryCardProps {
@@ -65,8 +66,8 @@ export function EntryCard({ entry }: EntryCardProps) {
   const [open, setOpen] = useState(false);
 
   // Edit form state — initialised when modal opens
-  const [date, setDate] = useState(toDateInput(entry.date));
-  const [time, setTime] = useState(entry.time);
+  const [date, setDate] = useState(toDateInput(formatFrozenDate(entry)));
+  const [time, setTime] = useState(formatFrozenTime(entry));
   const [amount, setAmount] = useState(String(entry.amount));
   const [packets, setPackets] = useState(String(entry.packets));
   const [totalUsed, setTotalUsed] = useState(String(entry.totalUsed));
@@ -74,8 +75,8 @@ export function EntryCard({ entry }: EntryCardProps) {
   const [saving, setSaving] = useState(false);
 
   function openModal() {
-    setDate(toDateInput(entry.date));
-    setTime(entry.time);
+    setDate(toDateInput(formatFrozenDate(entry)));
+    setTime(formatFrozenTime(entry));
     setAmount(String(entry.amount));
     setPackets(String(entry.packets));
     setTotalUsed(String(entry.totalUsed));
@@ -125,7 +126,7 @@ export function EntryCard({ entry }: EntryCardProps) {
             src={entry.imageUrl}
             srcSet={entry.srcSetThumb}
             sizes="64px"
-            alt={`Milk packet ${entry.date} ${entry.time}`}
+            alt={`Milk packet ${formatFrozenDate(entry)} ${formatFrozenTime(entry)}`}
             className="h-16 w-16 shrink-0 rounded-md bg-muted object-cover"
             onError={(e) => {
               e.currentTarget.style.visibility = "hidden";
@@ -136,7 +137,7 @@ export function EntryCard({ entry }: EntryCardProps) {
         )}
         <div className="min-w-0 flex-1">
           <p className="text-base font-medium">
-            {entry.date} {entry.time}
+            {formatFrozenDate(entry)} {formatFrozenTime(entry)}
           </p>
           <p className="text-xs text-muted-foreground">
             Expires {getExpiryDate(entry) ?? "—"}
@@ -160,7 +161,7 @@ export function EntryCard({ entry }: EntryCardProps) {
             <X className="size-4" />
           </DialogClose>
           <DialogTitle className="sr-only">
-            {entry.date} {entry.time} — {entry.amount}ml
+            {formatFrozenDate(entry)} {formatFrozenTime(entry)} — {entry.amount}ml
           </DialogTitle>
 
           {/* Image */}
@@ -170,7 +171,7 @@ export function EntryCard({ entry }: EntryCardProps) {
                 src={entry.imageUrl}
                 srcSet={entry.srcSetLightbox}
                 sizes="384px"
-                alt={`Milk packet ${entry.date} ${entry.time}`}
+                alt={`Milk packet ${formatFrozenDate(entry)} ${formatFrozenTime(entry)}`}
                 className="max-h-[50vh] w-full object-contain"
               />
             ) : (

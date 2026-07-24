@@ -48,7 +48,7 @@ export function StorageEntryCard({ entry, checked, onToggle, onOpenDetail }: Sto
           src={entry.imageUrl}
           srcSet={entry.srcSetThumb}
           sizes="48px"
-          alt={`Milk packet ${entry.date}`}
+          alt={`Milk packet ${formatFrozenDate(entry)}`}
           className="h-12 w-12 shrink-0 rounded-md bg-muted object-cover"
         />
       ) : (
