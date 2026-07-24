@@ -62,7 +62,7 @@ export function RecentActivity({ activities, entries }: RecentActivityProps) {
               ? entryMap.get(act.frozenMilkEntryId)
               : undefined;
             const linkTo = act.frozenMilkEntryId
-              ? ({ to: "/storage-detail/$id" as const, params: { id: act.frozenMilkEntryId } })
+              ? ({ to: "/storage/$id" as const, params: { id: act.frozenMilkEntryId } })
               : null;
 
             const content = (
