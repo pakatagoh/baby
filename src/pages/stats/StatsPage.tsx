@@ -206,7 +206,7 @@ export function StatsPage() {
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">📊 Stats</h1>
+        <h1 className="sr-only">📊 Stats</h1>
       </div>
 
       {/* Period cards */}
