@@ -96,7 +96,21 @@ export function OverviewPage() {
         upcomingExpiry={upcomingExpiry}
         expiringSoon={expiringSoon}
       />
-      <ExpiryTimeline buckets={timelineBuckets} />
+      {entries.length > 0 ? (
+        <ExpiryTimeline buckets={timelineBuckets} />
+      ) : (
+        <div className="rounded-lg border bg-card p-4 animate-pulse">
+          <div className="h-4 w-32 rounded bg-muted mb-3" />
+          <div className="space-y-2">
+            {[1,2,3,4].map((i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="h-3 w-20 rounded bg-muted" />
+                <div className="flex-1 h-2 rounded bg-muted" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <RecentActivity activities={activities} entries={entries} />
     </main>
   );
