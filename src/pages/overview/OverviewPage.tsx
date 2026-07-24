@@ -77,6 +77,11 @@ export function OverviewPage() {
 
     for (const e of activeEntries) {
       const days = daysUntilExpiry(e);
+      // Debug first entry
+      if (activeEntries.indexOf(e) === 0) {
+        const m = e.date.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
+        console.log("[loop] date:", e.date, "regex match:", !!m, "parseSheetDate:", parseSheetDate(e.date), "days:", days);
+      }
       if (days <= 7)            { buckets[0].bags++; buckets[0].ml += e.amount; }
       else if (days <= 14)      { buckets[1].bags++; buckets[1].ml += e.amount; }
       else if (days <= 28)      { buckets[2].bags++; buckets[2].ml += e.amount; }
