@@ -69,29 +69,29 @@ export function OverviewPage() {
     () => activeEntries.filter((e) => daysUntilExpiry(e) <= 7).length,
     [activeEntries],
   );
-  // Timeline buckets — computed from active entries by expiry urgency
-  const timelineBuckets = (() => {
-    interface Bucket { label: string; color: string; bags: number; ml: number; }
-    const buckets: Bucket[] = [
-      { label: "Within 1 week", color: "red",    bags: 0, ml: 0 },
-      { label: "1–2 weeks",     color: "orange", bags: 0, ml: 0 },
-      { label: "2–4 weeks",     color: "yellow", bags: 0, ml: 0 },
-      { label: "1–3 months",    color: "green",  bags: 0, ml: 0 },
-    ];
+function computeTimelineBuckets(entries: MilkSheetEntry[]) {
+  interface Bucket { label: string; color: string; bags: number; ml: number; }
+  const buckets: Bucket[] = [
+    { label: "Within 1 week", color: "red",    bags: 0, ml: 0 },
+    { label: "1–2 weeks",     color: "orange", bags: 0, ml: 0 },
+    { label: "2–4 weeks",     color: "yellow", bags: 0, ml: 0 },
+    { label: "1–3 months",    color: "green",  bags: 0, ml: 0 },
+  ];
 
-    for (const e of activeEntries) {
-      const days = daysUntilExpiry(e);
-      if (days <= 7)            { buckets[0].bags++; buckets[0].ml += e.amount; }
-      else if (days <= 14)      { buckets[1].bags++; buckets[1].ml += e.amount; }
-      else if (days <= 28)      { buckets[2].bags++; buckets[2].ml += e.amount; }
-      else if (days <= 90)      { buckets[3].bags++; buckets[3].ml += e.amount; }
-    }
+  for (const e of entries) {
+    const days = daysUntilExpiry(e);
+    if (days <= 7)            { buckets[0].bags++; buckets[0].ml += e.amount; }
+    else if (days <= 14)      { buckets[1].bags++; buckets[1].ml += e.amount; }
+    else if (days <= 28)      { buckets[2].bags++; buckets[2].ml += e.amount; }
+    else if (days <= 90)      { buckets[3].bags++; buckets[3].ml += e.amount; }
+  }
 
-    const maxBags = Math.max(...buckets.map((b) => b.bags), 1);
-    return buckets.map((b) => ({ ...b, maxBags }));
-  })();
+  const maxBags = Math.max(...buckets.map((b) => b.bags), 1);
+  return buckets.map((b) => ({ ...b, maxBags }));
+}
 
   const hasEntries = entries.length > 0;
+  const timelineBuckets = hasEntries ? computeTimelineBuckets(activeEntries) : null;
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
@@ -102,7 +102,7 @@ export function OverviewPage() {
         upcomingExpiry={upcomingExpiry}
         expiringSoon={expiringSoon}
       />
-      {hasEntries ? (
+      {hasEntries && timelineBuckets ? (
         <ExpiryTimeline buckets={timelineBuckets} />
       ) : (
         <div className="rounded-lg border bg-card p-4 animate-pulse">
