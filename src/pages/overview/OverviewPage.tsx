@@ -86,7 +86,7 @@ export function OverviewPage() {
     console.log("[timelineBuckets] activeEntries:", activeEntries.length);
     if (activeEntries.length > 0) {
       const sample = activeEntries[0];
-      console.log("[timelineBuckets] sample date:", sample.date, "parsed:", parseSheetDate(sample.date), "days:", daysUntilExpiry(sample));
+      console.log("[timelineBuckets] sample date:", JSON.stringify(sample.date), "len:", sample.date.length, "charcodes:", [...sample.date].map(c => c.charCodeAt(0)).join(","));
     }
     console.log("[timelineBuckets] buckets:", buckets.map(b => `${b.label}=${b.bags}`).join(", "));
 
