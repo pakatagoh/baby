@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import type { AppActivity } from "@/lib/activity-log-fn";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { MilkBottlePlaceholder } from "@/components/svg/MilkBottlePlaceholder";
+import { formatFrozenDate } from "@/lib/frozen-date";
 
 interface RecentActivityProps {
   activities: AppActivity[];
@@ -25,7 +26,7 @@ function timeAgo(iso: string): string {
 
 function formatActivity(eventType: string, entry?: MilkSheetEntry): string {
   if (entry) {
-    if (eventType === "milk_frozen") return `Froze ${entry.amount} ml on ${entry.date}`;
+    if (eventType === "milk_frozen") return `Froze ${entry.amount} ml on ${formatFrozenDate(entry)}`;
     if (eventType === "entry_used") return `Used ${entry.amount} ml`;
     if (eventType === "entry_unused") return `Unused ${entry.amount} ml`;
   }

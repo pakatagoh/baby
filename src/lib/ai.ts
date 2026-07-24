@@ -10,14 +10,11 @@ const opencode = createAnthropic({
 const visionModel = opencode("minimax-m3");
 
 const MilkPacketSchema = z.object({
-  date: z
+  frozenAt: z
     .string()
     .describe(
-      "Date on the packet in DD-Mon-YY format, e.g. 15-Jul-26",
+      "ISO 8601 datetime of the freeze time in SGT (+08:00), e.g. 2026-07-16T10:30:00+08:00",
     ),
-  time: z
-    .string()
-    .describe("Time in HH:MM 24-hour format, e.g. 19:30"),
   amount_ml: z
     .number()
     .int()
@@ -55,11 +52,12 @@ export async function analyzeMilkPacket(
             text:
               "This is a photo of a frozen breast milk storage packet. " +
               "Extract the following information from the label:\n" +
-              "- Date (in DD-Mon-YY format, e.g. 15-Jul-26)\n" +
-              "- Time in 24-hour HH:MM format (e.g. 19:30)\n" +
+              "- The date and time the milk was frozen, as an ISO 8601 datetime in SGT (+08:00) timezone. " +
+              "Example: 2026-07-16T10:30:00+08:00. " +
+              "If the label shows a date like \"15 Jul 2026\" and time like \"10:30 AM\", combine them.\n" +
               "- Amount in ml (typically 80, 90, or 100)\n" +
               "- Number of packets in the photo (usually 1)\n\n" +
-              "If the date is written as numbers only (e.g. 15/7/26), convert to DD-Mon-YY format. " +
+              "If the label uses a different format (e.g. 15/7/26, 3:00 PM), convert to the ISO format. " +
               "If you're unsure about any field, make your best guess. " +
               "Never leave required fields empty.",
           },

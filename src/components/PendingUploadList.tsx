@@ -88,8 +88,7 @@ export function PendingUploadList({ pending, onRetry, onDismiss }: PendingUpload
             </div>
             {entry.status === "done" && entry.result && (
               <p className="mt-1 truncate text-xs text-muted-foreground">
-                {entry.result.amount_ml}ml · {entry.result.date}{" "}
-                {entry.result.time}
+                {entry.result.amount_ml}ml · {entry.result.frozenAt}
               </p>
             )}
             {entry.error && (

@@ -4,13 +4,7 @@ import { getEntries } from "@/lib/entries-fn";
 import { PeriodSummaryCard } from "@/pages/stats/PeriodSummaryCard";
 import { DailyFrozenChart } from "@/pages/stats/DailyFrozenChart";
 import { MonthlyFrozenChart } from "@/pages/stats/MonthlyFrozenChart";
-
-function parseSheetDate(s: string): number {
-  const m = s.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
-  if (!m) return NaN;
-  const d = new Date(`${m[2]} ${m[1]}, 20${m[3]}`);
-  return d.getTime();
-}
+import { getFrozenMs } from "@/lib/frozen-date";
 
 /** Get Monday 00:00 of the week `offset` weeks from now (0 = current, -1 = last week). */
 function getWeekMonday(offset: number): Date {
@@ -62,7 +56,7 @@ export function StatsPage() {
   const { weekAdded, weekUsed } = useMemo(() => {
     let added = 0, used = 0;
     for (const e of entries) {
-      const freezeMs = parseSheetDate(e.date);
+      const freezeMs = getFrozenMs(e);
       if (!Number.isNaN(freezeMs) && isInWeek(freezeMs, weekMonday)) {
         added += e.amount;
       }
@@ -82,7 +76,7 @@ export function StatsPage() {
   const { monthAdded, monthUsed } = useMemo(() => {
     let added = 0, used = 0;
     for (const e of entries) {
-      const freezeMs = parseSheetDate(e.date);
+      const freezeMs = getFrozenMs(e);
       if (!Number.isNaN(freezeMs) && isInMonth(freezeMs, monthStart)) {
         added += e.amount;
       }
@@ -104,7 +98,7 @@ export function StatsPage() {
     for (const day of DAYS) daily[day] = 0;
 
     for (const e of entries) {
-      const freezeMs = parseSheetDate(e.date);
+      const freezeMs = getFrozenMs(e);
       if (Number.isNaN(freezeMs)) continue;
       const d = new Date(freezeMs);
       if (d.getTime() >= weekMonday.getTime()) {
@@ -176,7 +170,7 @@ export function StatsPage() {
     }
 
     for (const e of entries) {
-      const freezeMs = parseSheetDate(e.date);
+      const freezeMs = getFrozenMs(e);
       if (Number.isNaN(freezeMs)) continue;
       const d = new Date(freezeMs);
       const mName = MONTHS[d.getMonth()];

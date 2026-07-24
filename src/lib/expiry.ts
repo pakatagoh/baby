@@ -1,4 +1,5 @@
 import type { MilkSheetEntry } from "@/lib/sheets";
+import { getFrozenMs } from "@/lib/frozen-date";
 
 const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -13,14 +14,9 @@ export function getExpiryMonth(
   entry: MilkSheetEntry,
   offsetMonths = 3,
 ): string | null {
-  const m = entry.date.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
-  if (!m) return null;
-
-  const monthIdx = MONTHS.indexOf(m[2] as (typeof MONTHS)[number]);
-  if (monthIdx === -1) return null;
-
-  const d = new Date(2000 + Number(m[3]), monthIdx, Number(m[1]));
-  if (isNaN(d.getTime())) return null;
+  const freezeMs = getFrozenMs(entry);
+  if (Number.isNaN(freezeMs)) return null;
+  const d = new Date(freezeMs);
 
   d.setMonth(d.getMonth() + offsetMonths);
 
@@ -47,14 +43,9 @@ export function getExpiryDate(
   entry: MilkSheetEntry,
   offsetMonths = 3,
 ): string | null {
-  const m = entry.date.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
-  if (!m) return null;
-
-  const monthIdx = MONTHS.indexOf(m[2] as (typeof MONTHS)[number]);
-  if (monthIdx === -1) return null;
-
-  const d = new Date(2000 + Number(m[3]), monthIdx, Number(m[1]));
-  if (isNaN(d.getTime())) return null;
+  const freezeMs = getFrozenMs(entry);
+  if (Number.isNaN(freezeMs)) return null;
+  const d = new Date(freezeMs);
 
   d.setMonth(d.getMonth() + offsetMonths);
 

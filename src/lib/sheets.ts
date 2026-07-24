@@ -15,8 +15,12 @@ function sgtISO(): string {
 export interface MilkSheetEntry {
   rowIndex?: number; // 1-based row in the sheet (set when reading from sheet)
   id: string; // UUID v4 — stable unique identifier
+  /** @deprecated Use frozenAt instead. Kept for backward compat during migration. */
   date: string; // "15-Jul-26"
+  /** @deprecated Use frozenAt instead. Kept for backward compat during migration. */
   time: string; // "19:30"
+  /** ISO 8601 datetime in SGT (+08:00) — when the milk was frozen. */
+  frozenAt: string;
   amount: number; // 80
   packets: number; // 1 (always 1 after "unrolling" multi-packet rows)
   totalFrozen: number; // 0
@@ -27,7 +31,7 @@ export interface MilkSheetEntry {
   srcSetThumb?: string;
   /** Pre-computed srcset for modal lightbox (server-enriched). */
   srcSetLightbox?: string;
-  // ── Metadata columns (J-M) ──────────────────────────────────────────
+  // ── Metadata columns (K-N) ──────────────────────────────────────────
   /** ISO 8601 timestamp — when this row was first created. */
   createdAt: string;
   /** ISO 8601 timestamp — when this row was last modified (empty if never). */
@@ -114,22 +118,23 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
-      range: `'${tab}'!A${nextRow}:M${nextRow}`,
+      range: `'${tab}'!A${nextRow}:N${nextRow}`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [
           [
-            `'${entry.date}`,
-            `'${entry.time}`,
+            `'${entry.date || ""}`,
+            `'${entry.time || ""}`,
+            entry.frozenAt || "",
             entry.amount,
             1, // always 1 packet per row
             // Total frozen = packets - total used (formula, not static value)
-            `=D${nextRow}-F${nextRow}`,
+            `=E${nextRow}-G${nextRow}`,
             entry.totalUsed,
             entry.notes,
             entry.imageUrl,
             id,
-            // Metadata columns (J-M)
+            // Metadata columns (K-N)
             `'${entry.createdAt || sgtISO()}`, // createdAt (caller's value or now)
             "", // updatedAt (empty until row is modified)
             false, // used checkbox
@@ -149,7 +154,7 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
 
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `'${tab}'!A${HEADER_ROW + 1}:M`,
+      range: `'${tab}'!A${HEADER_ROW + 1}:N`,
     });
 
     const rows = result.data.values || [];
@@ -164,19 +169,20 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
 
     return {
       rowIndex,
-      id: String(lastRow[8] || ""),
+      id: String(lastRow[9] || ""),
       date,
       time,
-      amount: Number(lastRow[2]) || 0,
-      packets: Number(lastRow[3]) || 0,
-      totalFrozen: Number(lastRow[4]) || 0,
-      totalUsed: Number(lastRow[5]) || 0,
-      notes: String(lastRow[6] || ""),
-      imageUrl: String(lastRow[7] || ""),
-      createdAt: String(lastRow[9] || "").replace(/^'/, ""),
-      updatedAt: String(lastRow[10] || "").replace(/^'/, ""),
-      used: String(lastRow[11] || "").toUpperCase() === "TRUE",
-      usedAt: String(lastRow[12] || "").replace(/^'/, ""),
+      frozenAt: String(lastRow[2] || ""),
+      amount: Number(lastRow[3]) || 0,
+      packets: Number(lastRow[4]) || 0,
+      totalFrozen: Number(lastRow[5]) || 0,
+      totalUsed: Number(lastRow[6]) || 0,
+      notes: String(lastRow[7] || ""),
+      imageUrl: String(lastRow[8] || ""),
+      createdAt: String(lastRow[10] || "").replace(/^'/, ""),
+      updatedAt: String(lastRow[11] || "").replace(/^'/, ""),
+      used: String(lastRow[12] || "").toUpperCase() === "TRUE",
+      usedAt: String(lastRow[13] || "").replace(/^'/, ""),
     };
   }
 
@@ -187,7 +193,7 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
 
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `'${tab}'!A${HEADER_ROW + 1}:M`,
+      range: `'${tab}'!A${HEADER_ROW + 1}:N`,
     });
 
     const rows = result.data.values || [];
@@ -198,19 +204,20 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
       if (!row[0] || String(row[0]).trim() === "") continue;
       entries.push({
         rowIndex: HEADER_ROW + 1 + i, // row 2, 3, 4, ...
-        id: String(row[8] || ""),
-        date: String(row[0] || "").replace(/^'/, ""),
-        time: String(row[1] || "").replace(/^'/, ""),
-        amount: Number(row[2]) || 0,
-        packets: Number(row[3]) || 0,
-        totalFrozen: Number(row[4]) || 0,
-        totalUsed: Number(row[5]) || 0,
-        notes: String(row[6] || ""),
-        imageUrl: String(row[7] || ""),
-        createdAt: String(row[9] || "").replace(/^'/, ""),
-        updatedAt: String(row[10] || "").replace(/^'/, ""),
-        used: String(row[11] || "").toUpperCase() === "TRUE",
-        usedAt: String(row[12] || "").replace(/^'/, ""),
+        id: String(row[9] || ""),       // J
+        date: String(row[0] || "").replace(/^'/, ""),  // A — deprecated
+        time: String(row[1] || "").replace(/^'/, ""),  // B — deprecated
+        frozenAt: String(row[2] || ""), // C
+        amount: Number(row[3]) || 0,    // D
+        packets: Number(row[4]) || 0,   // E
+        totalFrozen: Number(row[5]) || 0, // F
+        totalUsed: Number(row[6]) || 0,   // G
+        notes: String(row[7] || ""),      // H
+        imageUrl: String(row[8] || ""),   // I
+        createdAt: String(row[10] || "").replace(/^'/, ""), // K
+        updatedAt: String(row[11] || "").replace(/^'/, ""), // L
+        used: String(row[12] || "").toUpperCase() === "TRUE", // M
+        usedAt: String(row[13] || "").replace(/^'/, ""),      // N
       });
     }
     return entries;
@@ -227,35 +234,37 @@ export class GoogleSheetsBackend implements MilkStorageBackend {
     // Read the existing row so we only overwrite changed columns
     const existing = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `'${tab}'!A${rowIndex}:M${rowIndex}`,
+      range: `'${tab}'!A${rowIndex}:N${rowIndex}`,
     });
     const values = existing.data.values?.[0] ?? [];
-
-    const date = fields.date !== undefined ? `'${fields.date}` : values[0];
-    const time = fields.time !== undefined ? `'${fields.time}` : values[1];
-    const amount = fields.amount ?? values[2];
-    const packets = 1; // always 1 after unrolling
-    const totalFrozen = `=D${rowIndex}-F${rowIndex}`; // always formula
-    const totalUsed = fields.totalUsed ?? values[5];
-    const notes = fields.notes ?? values[6];
-    const imageUrl = fields.imageUrl ?? values[7];
-    const id = values[8]; // never mutated on update
+    // Preserve existing values for columns we don't overwrite
+    const date = fields.date !== undefined ? `'${fields.date}` : values[0];     // A
+    const time = fields.time !== undefined ? `'${fields.time}` : values[1];     // B
+    const frozenAt = fields.frozenAt ?? values[2];                              // C
+    const amount = fields.amount ?? values[3];                                  // D
+    const packets = 1; // always 1 after unrolling                               // E
+    // Total frozen = packets - total used (always a formula)
+    const totalFrozen = `=E${rowIndex}-G${rowIndex}`;
+    const totalUsed = fields.totalUsed ?? values[6];                            // G
+    const notes = fields.notes ?? values[7];                                    // H
+    const imageUrl = fields.imageUrl ?? values[8];                              // I
+    const id = values[9]; // never mutated on update                             // J
     // Metadata columns — preserve existing unless explicitly provided
-    const createdAt = fields.createdAt !== undefined
-      ? `'${fields.createdAt}` : values[9];
-    const updatedAt = `'${sgtISO()}`; // always touch on update
-    const used = fields.used !== undefined ? fields.used : values[11];
-    const usedAt = fields.usedAt !== undefined
+    const createdAt = fields.createdAt !== undefined                             // K
+      ? `'${fields.createdAt}` : values[10];
+    const updatedAt = `'${sgtISO()}`; // always touch on update                 // L
+    const used = fields.used !== undefined ? fields.used : values[12];           // M
+    const usedAt = fields.usedAt !== undefined                                   // N
       ? (fields.usedAt ? `'${fields.usedAt}` : "")
-      : values[12];
+      : values[13];
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
-      range: `'${tab}'!A${rowIndex}:M${rowIndex}`,
+      range: `'${tab}'!A${rowIndex}:N${rowIndex}`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [
-          [date, time, amount, packets, totalFrozen, totalUsed, notes, imageUrl, id,
+          [date, time, frozenAt, amount, packets, totalFrozen, totalUsed, notes, imageUrl, id,
            createdAt, updatedAt, used, usedAt],
         ],
       },

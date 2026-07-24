@@ -6,6 +6,7 @@ import { updateEntry } from "@/lib/update-entry-fn";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { TotalFrozenCard } from "@/pages/overview/TotalFrozenCard";
 import { SlidersHorizontal } from "lucide-react";
+import { getFrozenMs } from "@/lib/frozen-date";
 import { SortDropdown, type SortKey } from "@/pages/storage/SortDropdown";
 import { StorageTabs } from "@/pages/storage/StorageTabs";
 import { StorageEntryCard } from "@/pages/storage/StorageEntryCard";
@@ -16,18 +17,8 @@ import { fetchSortOption, sortOptionToSortKey } from "@/lib/app-settings-fn";
 
 type TabId = "all" | "frozen" | "used";
 
-function parseSheetDate(s: string): number {
-  const m = s.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
-  if (!m) return NaN;
-  const d = new Date(`${m[2]} ${m[1]}, 20${m[3]}`);
-  return d.getTime();
-}
-
 function entryTimestamp(e: MilkSheetEntry): number {
-  const dateMs = parseSheetDate(e.date);
-  if (Number.isNaN(dateMs)) return 0;
-  const [h = "0", m = "0"] = (e.time || "").split(":");
-  return dateMs + Number(h) * 3_600_000 + Number(m) * 60_000;
+  return getFrozenMs(e);
 }
 
 function matchesNumFilter(value: number, op: NumOp, raw: string): boolean {
@@ -94,12 +85,12 @@ export function StoragePage() {
   const filteredEntries = useMemo(() => {
     return tabbedEntries.filter((e) => {
       if (filter.dateStart) {
-        const ts = parseSheetDate(e.date);
+        const ts = getFrozenMs(e);
         const start = Date.parse(filter.dateStart + "T00:00:00");
         if (!Number.isNaN(ts) && ts < start) return false;
       }
       if (filter.dateEnd) {
-        const ts = parseSheetDate(e.date);
+        const ts = getFrozenMs(e);
         const end = Date.parse(filter.dateEnd + "T00:00:00") + 86_399_999;
         if (!Number.isNaN(ts) && ts > end) return false;
       }
