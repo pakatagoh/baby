@@ -15,7 +15,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
-import { Route as StorageIdRouteImport } from './routes/storage.$id'
+import { Route as StorageDetailIdRouteImport } from './routes/storage-detail.$id'
 import { Route as SettingsSortRouteImport } from './routes/settings.sort'
 import { Route as SettingsBabyRouteImport } from './routes/settings.baby'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
@@ -50,10 +50,10 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SettingsRoute,
 } as any)
-const StorageIdRoute = StorageIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => StorageRoute,
+const StorageDetailIdRoute = StorageDetailIdRouteImport.update({
+  id: '/storage-detail/$id',
+  path: '/storage-detail/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsSortRoute = SettingsSortRouteImport.update({
   id: '/sort',
@@ -76,22 +76,22 @@ export interface FileRoutesByFullPath {
   '/activity': typeof ActivityRoute
   '/settings': typeof SettingsRouteWithChildren
   '/stats': typeof StatsRoute
-  '/storage': typeof StorageRouteWithChildren
+  '/storage': typeof StorageRoute
   '/api/health': typeof ApiHealthRoute
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/sort': typeof SettingsSortRoute
-  '/storage/$id': typeof StorageIdRoute
+  '/storage-detail/$id': typeof StorageDetailIdRoute
   '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/stats': typeof StatsRoute
-  '/storage': typeof StorageRouteWithChildren
+  '/storage': typeof StorageRoute
   '/api/health': typeof ApiHealthRoute
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/sort': typeof SettingsSortRoute
-  '/storage/$id': typeof StorageIdRoute
+  '/storage-detail/$id': typeof StorageDetailIdRoute
   '/settings': typeof SettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -100,11 +100,11 @@ export interface FileRoutesById {
   '/activity': typeof ActivityRoute
   '/settings': typeof SettingsRouteWithChildren
   '/stats': typeof StatsRoute
-  '/storage': typeof StorageRouteWithChildren
+  '/storage': typeof StorageRoute
   '/api/health': typeof ApiHealthRoute
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/sort': typeof SettingsSortRoute
-  '/storage/$id': typeof StorageIdRoute
+  '/storage-detail/$id': typeof StorageDetailIdRoute
   '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -118,7 +118,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/settings/baby'
     | '/settings/sort'
-    | '/storage/$id'
+    | '/storage-detail/$id'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -129,7 +129,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/settings/baby'
     | '/settings/sort'
-    | '/storage/$id'
+    | '/storage-detail/$id'
     | '/settings'
   id:
     | '__root__'
@@ -141,7 +141,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/settings/baby'
     | '/settings/sort'
-    | '/storage/$id'
+    | '/storage-detail/$id'
     | '/settings/'
   fileRoutesById: FileRoutesById
 }
@@ -150,8 +150,9 @@ export interface RootRouteChildren {
   ActivityRoute: typeof ActivityRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   StatsRoute: typeof StatsRoute
-  StorageRoute: typeof StorageRouteWithChildren
+  StorageRoute: typeof StorageRoute
   ApiHealthRoute: typeof ApiHealthRoute
+  StorageDetailIdRoute: typeof StorageDetailIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -198,12 +199,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/storage/$id': {
-      id: '/storage/$id'
-      path: '/$id'
-      fullPath: '/storage/$id'
-      preLoaderRoute: typeof StorageIdRouteImport
-      parentRoute: typeof StorageRoute
+    '/storage-detail/$id': {
+      id: '/storage-detail/$id'
+      path: '/storage-detail/$id'
+      fullPath: '/storage-detail/$id'
+      preLoaderRoute: typeof StorageDetailIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/settings/sort': {
       id: '/settings/sort'
@@ -245,24 +246,14 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
   SettingsRouteChildren,
 )
 
-interface StorageRouteChildren {
-  StorageIdRoute: typeof StorageIdRoute
-}
-
-const StorageRouteChildren: StorageRouteChildren = {
-  StorageIdRoute: StorageIdRoute,
-}
-
-const StorageRouteWithChildren =
-  StorageRoute._addFileChildren(StorageRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
   SettingsRoute: SettingsRouteWithChildren,
   StatsRoute: StatsRoute,
-  StorageRoute: StorageRouteWithChildren,
+  StorageRoute: StorageRoute,
   ApiHealthRoute: ApiHealthRoute,
+  StorageDetailIdRoute: StorageDetailIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

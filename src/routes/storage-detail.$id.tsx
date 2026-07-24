@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getEntries } from "@/lib/entries-fn";
 import { StorageDetailPage } from "@/pages/storage/StorageDetailPage";
 
-export const Route = createFileRoute("/storage/$id")({
+export const Route = createFileRoute("/storage-detail/$id")({
   loader: ({ context }) =>
     context.queryClient.prefetchQuery({
       queryKey: ["entries"],
