@@ -69,8 +69,8 @@ export function OverviewPage() {
     () => activeEntries.filter((e) => daysUntilExpiry(e) <= 7).length,
     [activeEntries],
   );
-
-  const timelineBuckets = useMemo(() => {
+  // Timeline buckets — computed from active entries by expiry urgency
+  const timelineBuckets = (() => {
     interface Bucket { label: string; color: string; bags: number; ml: number; }
     const buckets: Bucket[] = [
       { label: "Within 1 week", color: "red",    bags: 0, ml: 0 },
@@ -89,7 +89,7 @@ export function OverviewPage() {
 
     const maxBags = Math.max(...buckets.map((b) => b.bags), 1);
     return buckets.map((b) => ({ ...b, maxBags }));
-  }, [activeEntries]);
+  })();
 
   const hasEntries = entries.length > 0;
 
