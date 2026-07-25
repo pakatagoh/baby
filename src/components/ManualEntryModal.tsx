@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, ImagePlus, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,12 +22,14 @@ interface ManualEntryModalProps {
 export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
   const createEntry = useServerFn(createManualEntry);
   const queryClient = useQueryClient();
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const initialFrozenAt = currentSgtISO();
   const [date, setDate] = useState(() => frozenDateInput({ frozenAt: initialFrozenAt }));
   const [time, setTime] = useState(() => frozenTimeInput({ frozenAt: initialFrozenAt }));
   const [amount, setAmount] = useState("");
   const [packetCount, setPacketCount] = useState("1");
   const [notes, setNotes] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState("");
 
@@ -52,14 +54,14 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
     try {
       setError("");
       setPhase("saving");
-      await createEntry({
-        data: {
-          frozenAt: toFrozenAt(date, time),
-          amount: parsedAmount,
-          packetCount: parsedCount,
-          notes: notes.trim(),
-        },
-      });
+      const form = new FormData();
+      form.set("frozenAt", toFrozenAt(date, time));
+      form.set("amount", String(parsedAmount));
+      form.set("packetCount", String(parsedCount));
+      form.set("notes", notes.trim());
+      if (photo) form.set("image", photo);
+
+      await createEntry({ data: form });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["entries"] }),
         queryClient.invalidateQueries({ queryKey: ["activities"] }),
@@ -94,11 +96,11 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
           >
             <DialogTitle>Add milk manually</DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Enter the details for each packet. No photo is required.
+              Enter the details for each packet. A photo is optional.
             </p>
 
-            <div className="grid grid-cols-2 gap-3">
-              <label className="space-y-1.5">
+            <div className="space-y-4">
+              <label className="block space-y-1.5">
                 <span className="text-sm font-medium">Frozen date</span>
                 <Input
                   type="date"
@@ -108,7 +110,7 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
                   required
                 />
               </label>
-              <label className="space-y-1.5">
+              <label className="block space-y-1.5">
                 <span className="text-sm font-medium">Frozen time</span>
                 <Input
                   type="time"
@@ -147,6 +149,47 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
                   required
                 />
               </label>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-sm font-medium">Photo <span className="font-normal text-muted-foreground">(optional)</span></span>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
+              />
+              {photo ? (
+                <div className="flex items-center justify-between gap-3 rounded-md border border-input px-3 py-2 text-sm">
+                  <span className="min-w-0 truncate">{photo.name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 shrink-0"
+                    disabled={isSaving}
+                    onClick={() => {
+                      setPhoto(null);
+                      if (photoInputRef.current) photoInputRef.current.value = "";
+                    }}
+                    aria-label="Remove selected photo"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start gap-2"
+                  disabled={isSaving}
+                  onClick={() => photoInputRef.current?.click()}
+                >
+                  <ImagePlus className="size-4 text-primary" />
+                  Add a photo
+                </Button>
+              )}
             </div>
 
             <label className="space-y-1.5">
