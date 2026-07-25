@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Camera,
-  FileUp,
   Home,
   ImagePlus,
   Keyboard,
@@ -40,8 +39,7 @@ export default function BottomNav({ onFileSelected, onManualEntry }: BottomNavPr
   const pathname = location.pathname;
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   function isActive(to: string) {
     if (to === "/") return pathname === "/";
@@ -118,14 +116,7 @@ export default function BottomNav({ onFileSelected, onManualEntry }: BottomNavPr
               onChange={handleFileChange}
             />
             <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <input
-              ref={fileInputRef}
+              ref={imageInputRef}
               type="file"
               accept="image/*"
               className="hidden"
@@ -135,13 +126,9 @@ export default function BottomNav({ onFileSelected, onManualEntry }: BottomNavPr
               <Camera className="size-5 text-primary" />
               <span>Take a photo</span>
             </Button>
-            <Button variant="outline" className="h-auto justify-start gap-3 px-3 py-3" onClick={() => photoInputRef.current?.click()}>
+            <Button variant="outline" className="h-auto justify-start gap-3 px-3 py-3" onClick={() => imageInputRef.current?.click()}>
               <ImagePlus className="size-5 text-primary" />
-              <span>Choose a photo</span>
-            </Button>
-            <Button variant="outline" className="h-auto justify-start gap-3 px-3 py-3" onClick={() => fileInputRef.current?.click()}>
-              <FileUp className="size-5 text-primary" />
-              <span>Choose from files</span>
+              <span>Choose an image</span>
             </Button>
             <Button className="h-auto justify-start gap-3 px-3 py-3" onClick={startManualEntry}>
               <Keyboard className="size-5" />
