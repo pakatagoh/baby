@@ -78,7 +78,7 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open && !isSaving) onClose(); }}>
-      <DialogContent className="max-w-sm gap-0 rounded-2xl border-0 bg-white p-0 shadow-lg">
+      <DialogContent className="!w-[calc(100%-1rem)] max-w-sm gap-0 rounded-2xl border-0 bg-white p-0 shadow-lg">
         {isSuccess ? (
           <div className="flex flex-col items-center gap-4 px-4 py-12">
             <CheckCircle2 className="size-10 text-green-500" />
@@ -104,6 +104,7 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
                 <span className="text-sm font-medium">Frozen date</span>
                 <Input
                   type="date"
+                  className="w-full min-w-0 max-w-full"
                   value={date}
                   onChange={(event) => setDate(event.target.value)}
                   disabled={isSaving}
@@ -114,6 +115,7 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
                 <span className="text-sm font-medium">Frozen time</span>
                 <Input
                   type="time"
+                  className="w-full min-w-0 max-w-full"
                   value={time}
                   onChange={(event) => setTime(event.target.value)}
                   disabled={isSaving}

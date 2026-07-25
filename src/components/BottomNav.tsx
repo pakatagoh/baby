@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Camera,
   Home,
   ImagePlus,
   Keyboard,
@@ -38,7 +37,6 @@ export default function BottomNav({ onFileSelected, onManualEntry }: BottomNavPr
   const { location } = useRouterState();
   const pathname = location.pathname;
   const [addMenuOpen, setAddMenuOpen] = useState(false);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   function isActive(to: string) {
@@ -108,27 +106,15 @@ export default function BottomNav({ onFileSelected, onManualEntry }: BottomNavPr
           <p className="text-sm text-muted-foreground">Choose how you would like to add an entry.</p>
           <div className="grid gap-2 pt-1">
             <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <input
               ref={imageInputRef}
               type="file"
               accept="image/*"
               className="hidden"
               onChange={handleFileChange}
             />
-            <Button variant="outline" className="h-auto justify-start gap-3 px-3 py-3" onClick={() => cameraInputRef.current?.click()}>
-              <Camera className="size-5 text-primary" />
-              <span>Take a photo</span>
-            </Button>
             <Button variant="outline" className="h-auto justify-start gap-3 px-3 py-3" onClick={() => imageInputRef.current?.click()}>
               <ImagePlus className="size-5 text-primary" />
-              <span>Choose an image</span>
+              <span>Upload a photo</span>
             </Button>
             <Button className="h-auto justify-start gap-3 px-3 py-3" onClick={startManualEntry}>
               <Keyboard className="size-5" />
