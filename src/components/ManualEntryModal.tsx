@@ -24,8 +24,12 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
   const queryClient = useQueryClient();
   const photoInputRef = useRef<HTMLInputElement>(null);
   const initialFrozenAt = currentSgtISO();
-  const [date, setDate] = useState(() => frozenDateInput({ frozenAt: initialFrozenAt }));
-  const [time, setTime] = useState(() => frozenTimeInput({ frozenAt: initialFrozenAt }));
+  const [date, setDate] = useState(() =>
+    frozenDateInput({ frozenAt: initialFrozenAt }),
+  );
+  const [time, setTime] = useState(() =>
+    frozenTimeInput({ frozenAt: initialFrozenAt }),
+  );
   const [amount, setAmount] = useState("");
   const [packetCount, setPacketCount] = useState("1");
   const [notes, setNotes] = useState("");
@@ -42,7 +46,11 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
   const submit = async () => {
     const parsedAmount = Number(amount);
     const parsedCount = Number(packetCount);
-    if (!Number.isInteger(parsedAmount) || parsedAmount < 1 || parsedAmount > 1000) {
+    if (
+      !Number.isInteger(parsedAmount) ||
+      parsedAmount < 1 ||
+      parsedAmount > 1000
+    ) {
       setError("Enter an amount between 1 and 1,000 ml.");
       return;
     }
@@ -69,7 +77,9 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
       setPhase("success");
     } catch (cause) {
       setPhase("form");
-      setError(cause instanceof Error ? cause.message : "Could not save this entry.");
+      setError(
+        cause instanceof Error ? cause.message : "Could not save this entry.",
+      );
     }
   };
 
@@ -77,8 +87,13 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
   const isSuccess = phase === "success";
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open && !isSaving) onClose(); }}>
-      <DialogContent className="!w-[calc(100%-1rem)] max-w-sm gap-0 rounded-2xl border-0 bg-white p-0 shadow-lg">
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !isSaving) onClose();
+      }}
+    >
+      <DialogContent className="max-w-sm gap-0 rounded-2xl border-0 bg-white p-0 shadow-lg">
         {isSuccess ? (
           <div className="flex flex-col items-center gap-4 px-4 py-12">
             <CheckCircle2 className="size-10 text-green-500" />
@@ -99,34 +114,48 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
               Enter the details for each packet. A photo is optional.
             </p>
 
-            <div className="space-y-4">
-              <label className="block space-y-1.5">
-                <span className="text-sm font-medium">Frozen date</span>
+            <div className="flex flex-col gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <label
+                  htmlFor="manual-frozen-date"
+                  className="w-16 shrink-0 text-sm text-muted-foreground"
+                >
+                  Date
+                </label>
                 <Input
+                  id="manual-frozen-date"
                   type="date"
-                  className="w-full min-w-0 max-w-full"
+                  className="flex-1"
                   value={date}
                   onChange={(event) => setDate(event.target.value)}
                   disabled={isSaving}
                   required
                 />
-              </label>
-              <label className="block space-y-1.5">
-                <span className="text-sm font-medium">Frozen time</span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <label
+                  htmlFor="manual-frozen-time"
+                  className="w-16 shrink-0 text-sm text-muted-foreground"
+                >
+                  Time
+                </label>
                 <Input
+                  id="manual-frozen-time"
                   type="time"
-                  className="w-full min-w-0 max-w-full"
+                  className="flex-1"
                   value={time}
                   onChange={(event) => setTime(event.target.value)}
                   disabled={isSaving}
                   required
                 />
-              </label>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1.5">
-                <span className="text-sm font-medium">Amount per packet (ml)</span>
+                <span className="text-sm font-medium">
+                  Amount per packet (ml)
+                </span>
                 <Input
                   type="number"
                   inputMode="numeric"
@@ -154,7 +183,12 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
             </div>
 
             <div className="space-y-1.5">
-              <span className="text-sm font-medium">Photo <span className="font-normal text-muted-foreground">(optional)</span></span>
+              <span className="text-sm font-medium">
+                Photo{" "}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </span>
               <input
                 ref={photoInputRef}
                 type="file"
@@ -173,7 +207,8 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
                     disabled={isSaving}
                     onClick={() => {
                       setPhoto(null);
-                      if (photoInputRef.current) photoInputRef.current.value = "";
+                      if (photoInputRef.current)
+                        photoInputRef.current.value = "";
                     }}
                     aria-label="Remove selected photo"
                   >
@@ -195,7 +230,12 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
             </div>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium">Notes <span className="font-normal text-muted-foreground">(optional)</span></span>
+              <span className="text-sm font-medium">
+                Notes{" "}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </span>
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
@@ -212,7 +252,11 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
               disabled={isSaving}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/80"
             >
-              {isSaving ? <Loader2 className="size-4 animate-spin" /> : "Save entry"}
+              {isSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                "Save entry"
+              )}
             </Button>
           </form>
         )}
