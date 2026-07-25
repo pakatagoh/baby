@@ -146,8 +146,6 @@ export function StoragePage() {
   // ── Render ────────────────────────────────────────────────────
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
-      <h1 className="sr-only">❄️ Storage</h1>
-
       <TotalFrozenCard totalMl={totalMl} />
 
       {/* Tabs */}
@@ -215,6 +213,7 @@ export function StoragePage() {
         open={selectedEntry !== null}
         onClose={() => setSelectedEntry(null)}
       />
+      <h1 className="sr-only">Storage</h1>
     </main>
   );
 }

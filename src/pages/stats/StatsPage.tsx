@@ -199,10 +199,6 @@ export function StatsPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
-      <div className="flex items-center justify-between">
-        <h1 className="sr-only">📊 Stats</h1>
-      </div>
-
       {/* Period cards */}
       <div className="grid grid-cols-2 gap-3">
         <PeriodSummaryCard
@@ -238,6 +234,7 @@ export function StatsPage() {
         onPrev={prevHalfYear}
         onNext={nextHalfYear}
       />
+      <h1 className="sr-only">Stats</h1>
     </main>
   );
 }

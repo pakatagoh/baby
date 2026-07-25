@@ -62,7 +62,6 @@ export function OverviewPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
-      <h1 className="sr-only">Overview</h1>
       {profile && <BabyProfileHero profile={profile} imageUrl={profile.imageUrl} />}
       <StatsGrid
         bagCount={bagCount}
@@ -85,6 +84,7 @@ export function OverviewPage() {
         </div>
       )}
       <RecentActivity activities={activities} entries={entries} />
+      <h1 className="sr-only">Overview</h1>
     </main>
   );
 }
