@@ -1,47 +1,66 @@
-/** Format an ISO frozenAt datetime for display, or fall back to date+time fields. */
-export function formatFrozenDate(entry: { frozenAt: string; date: string }): string {
-  if (entry.frozenAt) {
-    const d = new Date(entry.frozenAt);
-    if (!isNaN(d.getTime())) {
-      const dd = String(d.getDate()).padStart(2, "0");
-      const mm = d.toLocaleString("en-US", { month: "short" });
-      const yy = String(d.getFullYear()).slice(2);
-      return `${dd}-${mm}-${yy}`;
-    }
-  }
-  return entry.date;
+const SGT_TIME_ZONE = "Asia/Singapore";
+
+function sgtParts(frozenAt: string): Record<string, string> | null {
+  const date = new Date(frozenAt);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: SGT_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
 }
 
-export function formatFrozenTime(entry: { frozenAt: string; time: string }): string {
-  if (entry.frozenAt) {
-    const d = new Date(entry.frozenAt);
-    if (!isNaN(d.getTime())) {
-      const h = String(d.getHours()).padStart(2, "0");
-      const m = String(d.getMinutes()).padStart(2, "0");
-      return `${h}:${m}`;
-    }
-  }
-  return entry.time;
+/** Format frozenAt as DD-Mon-YY in Singapore time. */
+export function formatFrozenDate(entry: { frozenAt: string }): string {
+  const parts = sgtParts(entry.frozenAt);
+  if (!parts) return "—";
+  const month = new Intl.DateTimeFormat("en-US", {
+    timeZone: SGT_TIME_ZONE,
+    month: "short",
+  }).format(new Date(entry.frozenAt));
+  return `${parts.day}-${month}-${parts.year.slice(-2)}`;
 }
 
-export function formatFrozenDateTime(entry: { frozenAt: string; date: string; time: string }): string {
+/** Format frozenAt as HH:mm in Singapore time. */
+export function formatFrozenTime(entry: { frozenAt: string }): string {
+  const parts = sgtParts(entry.frozenAt);
+  return parts ? `${parts.hour}:${parts.minute}` : "—";
+}
+
+export function formatFrozenDateTime(entry: { frozenAt: string }): string {
   return `${formatFrozenDate(entry)} ${formatFrozenTime(entry)}`;
 }
 
-/** Get the freeze timestamp (ms) from frozenAt, falling back to date parsing. */
-export function getFrozenMs(entry: { frozenAt: string; date: string }): number {
-  if (entry.frozenAt) {
-    const ms = Date.parse(entry.frozenAt);
-    if (!Number.isNaN(ms)) return ms;
+/** A YYYY-MM-DD value suitable for a native date input, in Singapore time. */
+export function frozenDateInput(entry: { frozenAt: string }): string {
+  const parts = sgtParts(entry.frozenAt);
+  return parts ? `${parts.year}-${parts.month}-${parts.day}` : "";
+}
+
+/** An HH:mm value suitable for a native time input, in Singapore time. */
+export function frozenTimeInput(entry: { frozenAt: string }): string {
+  const parts = sgtParts(entry.frozenAt);
+  return parts ? `${parts.hour}:${parts.minute}` : "";
+}
+
+/** Combine date/time form values into a valid ISO 8601 datetime in SGT. */
+export function toFrozenAt(date: string, time: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+    throw new Error("A valid frozen date and time are required");
   }
-  // Fallback for old entries without frozenAt
-  const m = entry.date.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
-  if (!m) return NaN;
-  const MONTHS: Record<string, number> = {
-    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
-  };
-  const month = MONTHS[m[2]];
-  if (month === undefined) return NaN;
-  return new Date(2000 + Number(m[3]), month, Number(m[1])).getTime();
+  return `${date}T${time}:00+08:00`;
+}
+
+/** Get the freeze instant in milliseconds. */
+export function getFrozenMs(entry: { frozenAt: string }): number {
+  return Date.parse(entry.frozenAt);
 }

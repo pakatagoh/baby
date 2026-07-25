@@ -6,58 +6,17 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui
 import { X } from "lucide-react";
 import { updateEntry } from "@/lib/update-entry-fn";
 import { getExpiryDate } from "@/lib/expiry";
-import { formatFrozenDate, formatFrozenTime } from "@/lib/frozen-date";
+import {
+  formatFrozenDate,
+  formatFrozenTime,
+  frozenDateInput,
+  frozenTimeInput,
+  toFrozenAt,
+} from "@/lib/frozen-date";
 import type { MilkSheetEntry } from "@/lib/sheets";
 
 interface EntryCardProps {
   entry: MilkSheetEntry;
-}
-
-// Convert "DD-Mon-YY" → "YYYY-MM-DD" for native date input
-function toDateInput(sheetDate: string): string {
-  const m = sheetDate.match(/^(\d{1,2})-(\w{3})-(\d{2})$/);
-  if (!m) return "";
-  const months: Record<string, string> = {
-    Jan: "01",
-    Feb: "02",
-    Mar: "03",
-    Apr: "04",
-    May: "05",
-    Jun: "06",
-    Jul: "07",
-    Aug: "08",
-    Sep: "09",
-    Oct: "10",
-    Nov: "11",
-    Dec: "12",
-  };
-  const mm = months[m[2]];
-  if (!mm) return "";
-  return `20${m[3]}-${mm}-${m[1].padStart(2, "0")}`;
-}
-
-// Convert "YYYY-MM-DD" → "DD-Mon-YY"
-function toSheetDate(dateInput: string): string {
-  const d = new Date(dateInput + "T00:00:00");
-  if (isNaN(d.getTime())) return dateInput;
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mon = months[d.getMonth()];
-  const yy = String(d.getFullYear()).slice(2);
-  return `${dd}-${mon}-${yy}`;
 }
 
 export function EntryCard({ entry }: EntryCardProps) {
@@ -66,8 +25,8 @@ export function EntryCard({ entry }: EntryCardProps) {
   const [open, setOpen] = useState(false);
 
   // Edit form state — initialised when modal opens
-  const [date, setDate] = useState(toDateInput(formatFrozenDate(entry)));
-  const [time, setTime] = useState(formatFrozenTime(entry));
+  const [date, setDate] = useState(frozenDateInput(entry));
+  const [time, setTime] = useState(frozenTimeInput(entry));
   const [amount, setAmount] = useState(String(entry.amount));
   const [packets, setPackets] = useState(String(entry.packets));
   const [totalUsed, setTotalUsed] = useState(String(entry.totalUsed));
@@ -75,8 +34,8 @@ export function EntryCard({ entry }: EntryCardProps) {
   const [saving, setSaving] = useState(false);
 
   function openModal() {
-    setDate(toDateInput(formatFrozenDate(entry)));
-    setTime(formatFrozenTime(entry));
+    setDate(frozenDateInput(entry));
+    setTime(frozenTimeInput(entry));
     setAmount(String(entry.amount));
     setPackets(String(entry.packets));
     setTotalUsed(String(entry.totalUsed));
@@ -91,8 +50,7 @@ export function EntryCard({ entry }: EntryCardProps) {
       await updateFn({
         data: {
           rowIndex: entry.rowIndex,
-          date: toSheetDate(date),
-          time,
+          frozenAt: toFrozenAt(date, time),
           amount: Number(amount),
           packets: Number(packets),
           totalUsed: Number(totalUsed),

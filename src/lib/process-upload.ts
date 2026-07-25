@@ -57,8 +57,6 @@ export function processUpload(file: File): Promise<UploadResult> {
     console.log("[process-upload] appending to sheet");
     const { id } = await appendToSheet({
       id: "",
-      date: "",           // deprecated — no longer populated
-      time: "",           // deprecated — no longer populated
       frozenAt: result.frozenAt,
       amount: result.amount_ml,
       packets: result.packets,
@@ -117,8 +115,6 @@ export function processBatchUpload(
     for (let i = 0; i < packetCount; i++) {
       const { id } = await appendToSheet({
         id: "",
-        date: "",           // deprecated
-        time: "",           // deprecated
         frozenAt: result.frozenAt,
         amount: result.amount_ml,
         packets: 1, // always 1 per row after unrolling

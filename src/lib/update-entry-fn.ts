@@ -3,8 +3,7 @@ import { z } from "zod";
 
 const UpdateEntrySchema = z.object({
   rowIndex: z.number().int().positive(),
-  date: z.string().optional(),
-  time: z.string().optional(),
+  frozenAt: z.string().datetime({ offset: true }).optional(),
   amount: z.number().int().positive().optional(),
   packets: z.number().int().positive().optional(),
   totalUsed: z.number().int().min(0).optional(),

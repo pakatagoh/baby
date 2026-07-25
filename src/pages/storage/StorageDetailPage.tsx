@@ -9,7 +9,12 @@ import { MilkBottlePlaceholder } from "@/components/svg/MilkBottlePlaceholder";
 import { updateEntry } from "@/lib/update-entry-fn";
 import { deleteMilkEntry } from "@/lib/delete-entry-fn";
 import { getExpiryDate } from "@/lib/expiry";
-import { formatFrozenDate, formatFrozenTime } from "@/lib/frozen-date";
+import {
+  formatFrozenDate,
+  frozenDateInput,
+  frozenTimeInput,
+  toFrozenAt,
+} from "@/lib/frozen-date";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { ArrowLeft } from "lucide-react";
 
@@ -20,8 +25,8 @@ export function StorageDetailPage({ entry }: { entry: MilkSheetEntry }) {
   const updateFn = useServerFn(updateEntry);
   const deleteFn = useServerFn(deleteMilkEntry);
 
-  const [date, setDate] = useState(formatFrozenDate(entry));
-  const [time, setTime] = useState(formatFrozenTime(entry));
+  const [date, setDate] = useState(frozenDateInput(entry));
+  const [time, setTime] = useState(frozenTimeInput(entry));
   const [amount, setAmount] = useState(String(entry.amount));
   const [used, setUsed] = useState(entry.used);
   const [saving, setSaving] = useState(false);
@@ -35,8 +40,7 @@ export function StorageDetailPage({ entry }: { entry: MilkSheetEntry }) {
       await updateFn({
         data: {
           rowIndex: entry.rowIndex,
-          date,
-          time,
+          frozenAt: toFrozenAt(date, time),
           amount: Number(amount) || 0,
           used,
           usedAt: used ? (entry.usedAt || new Date().toISOString()) : "",
@@ -105,19 +109,19 @@ export function StorageDetailPage({ entry }: { entry: MilkSheetEntry }) {
         <div className="flex items-center gap-2">
           <label className="w-16 shrink-0 text-sm text-muted-foreground">Date</label>
           <Input
+            type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="flex-1"
-            placeholder="DD-Mon-YY"
           />
         </div>
         <div className="flex items-center gap-2">
           <label className="w-16 shrink-0 text-sm text-muted-foreground">Time</label>
           <Input
+            type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
             className="flex-1"
-            placeholder="HH:MM"
           />
         </div>
         <div className="flex items-center gap-2">

@@ -6,10 +6,7 @@ const MONTHS = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ] as const;
 
-/**
- * Parse a sheet date string ("DD-Mon-YY") and add `months` offset.
- * Returns "Mon-YY" (e.g., "Oct-26") or `null` if unparseable.
- */
+/** Add `months` to the frozenAt datetime and return an expiry month. */
 export function getExpiryMonth(
   entry: MilkSheetEntry,
   offsetMonths = 3,
@@ -36,7 +33,7 @@ export function formatExpiryMonth(key: string): string {
 }
 
 /**
- * Parse a sheet date string ("DD-Mon-YY") and add `months` offset.
+ * Add `months` to the frozenAt datetime.
  * Returns "DD-Mon-YY" (e.g., "15-Oct-26") or `null` if unparseable.
  */
 export function getExpiryDate(

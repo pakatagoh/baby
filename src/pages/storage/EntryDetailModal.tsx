@@ -12,7 +12,12 @@ import { MilkBottlePlaceholder } from "@/components/svg/MilkBottlePlaceholder";
 import { updateEntry } from "@/lib/update-entry-fn";
 import { deleteMilkEntry } from "@/lib/delete-entry-fn";
 import { getExpiryDate } from "@/lib/expiry";
-import { formatFrozenDate, formatFrozenTime } from "@/lib/frozen-date";
+import {
+  formatFrozenDate,
+  frozenDateInput,
+  frozenTimeInput,
+  toFrozenAt,
+} from "@/lib/frozen-date";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { X } from "lucide-react";
 
@@ -38,8 +43,8 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
   // Reset form whenever a new entry is opened
   useEffect(() => {
     if (entry && open) {
-      setDate(formatFrozenDate(entry));
-      setTime(formatFrozenTime(entry));
+      setDate(frozenDateInput(entry));
+      setTime(frozenTimeInput(entry));
       setAmount(String(entry.amount));
       setUsed(entry.used);
       setConfirmDelete(false);
@@ -55,8 +60,7 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
       await updateFn({
         data: {
           rowIndex: entry.rowIndex,
-          date,
-          time,
+          frozenAt: toFrozenAt(date, time),
           amount: Number(amount) || 0,
           used,
           usedAt: used ? (entry.usedAt || new Date().toISOString()) : "",
@@ -121,19 +125,19 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
           <div className="flex items-center gap-2">
             <label className="w-16 shrink-0 text-sm text-muted-foreground">Date</label>
             <Input
+              type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="flex-1"
-              placeholder="DD-Mon-YY"
             />
           </div>
           <div className="flex items-center gap-2">
             <label className="w-16 shrink-0 text-sm text-muted-foreground">Time</label>
             <Input
+              type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
               className="flex-1"
-              placeholder="HH:MM"
             />
           </div>
           <div className="flex items-center gap-2">
