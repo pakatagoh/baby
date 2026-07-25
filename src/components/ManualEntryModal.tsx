@@ -93,7 +93,10 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
         if (!open && !isSaving) onClose();
       }}
     >
-      <DialogContent className="max-w-sm gap-0 rounded-2xl border-0 bg-white p-0 shadow-lg">
+      <DialogContent
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        className="max-w-sm gap-0 rounded-2xl border-0 bg-white p-0 shadow-lg"
+      >
         {isSuccess ? (
           <div className="flex flex-col items-center gap-4 px-4 py-12">
             <CheckCircle2 className="size-10 text-green-500" />
