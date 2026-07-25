@@ -1,9 +1,6 @@
 const SGT_TIME_ZONE = "Asia/Singapore";
 
-function sgtParts(frozenAt: string): Record<string, string> | null {
-  const date = new Date(frozenAt);
-  if (Number.isNaN(date.getTime())) return null;
-
+function sgtDateParts(date: Date): Record<string, string> {
   return Object.fromEntries(
     new Intl.DateTimeFormat("en-GB", {
       timeZone: SGT_TIME_ZONE,
@@ -12,11 +9,23 @@ function sgtParts(frozenAt: string): Record<string, string> | null {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      second: "2-digit",
       hourCycle: "h23",
     }).formatToParts(date)
       .filter((part) => part.type !== "literal")
       .map((part) => [part.type, part.value]),
   );
+}
+
+function sgtParts(frozenAt: string): Record<string, string> | null {
+  const date = new Date(frozenAt);
+  return Number.isNaN(date.getTime()) ? null : sgtDateParts(date);
+}
+
+/** Current time as an ISO 8601 datetime in Singapore time. */
+export function currentSgtISO(): string {
+  const parts = sgtDateParts(new Date());
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}+08:00`;
 }
 
 /** Format frozenAt as DD-Mon-YY in Singapore time. */

@@ -3,12 +3,10 @@ import { saveUpload, generateImgproxyUrl } from "./images";
 import { generateImgproxySrcSet } from "./imgproxy-url";
 import { appendToSheet } from "./sheets";
 import { appendActivity } from "./activity-log";
+import { enqueueMilkWrite } from "./milk-write-queue";
+import { currentSgtISO } from "./frozen-date";
 
-/** Current time as ISO 8601 in SGT (+08:00). */
-function sgtISO(): string {
-  const now = new Date(Date.now() + 8 * 60 * 60 * 1000);
-  return now.toISOString().replace("Z", "+08:00");
-}
+const sgtISO = currentSgtISO;
 
 export interface UploadResult {
   id: string;
@@ -27,21 +25,16 @@ export interface BatchUploadResult {
 /**
  * Serialize uploads through a single in-process queue.
  *
- * The old job worker processed one image at a time, which kept Google Sheets
- * row allocation race-free — `appendToSheet` reads the last used row and then
- * writes the next one, so two concurrent appends would both pick the same row
- * and clobber each other. The UI now fires uploads concurrently (so the user
- * can keep snapping), so this queue restores that one-at-a-time guarantee on
- * the server while each client entry still shows its own independent status.
+ * The UI can start multiple uploads while the queue ensures each write gets a
+ * distinct Sheet row. The queue is shared with manual entries.
  *
  * NOTE: this only serializes within a single server process. If you ever run
  * multiple replicas, switch `appendToSheet` to the Sheets `values.append` API
  * (atomic end-of-table insert) instead of relying on this queue.
  */
-let chain: Promise<unknown> = Promise.resolve();
 
 export function processUpload(file: File): Promise<UploadResult> {
-  const run = chain.then(async () => {
+  return enqueueMilkWrite(async () => {
     console.log("[process-upload] starting saveUpload");
     const { storedPath, optimizedBase64 } = await saveUpload(file, "milk");
     console.log("[process-upload] saved to:", storedPath, "base64 length:", optimizedBase64.length);
@@ -80,11 +73,6 @@ export function processUpload(file: File): Promise<UploadResult> {
 
     return { id, previewUrl, srcSetThumb, result };
   });
-
-  // Keep the chain alive even if a step rejects, so one failure doesn't stall
-  // every subsequent upload.
-  chain = run.catch(() => {});
-  return run;
 }
 
 /**
@@ -96,7 +84,7 @@ export function processBatchUpload(
   file: File,
   packetCount: number,
 ): Promise<BatchUploadResult> {
-  const run = chain.then(async () => {
+  return enqueueMilkWrite(async () => {
     console.log("[process-upload] batch: starting saveUpload");
     const { storedPath, optimizedBase64 } = await saveUpload(file, "milk");
     console.log("[process-upload] batch: saved to:", storedPath);
@@ -139,7 +127,4 @@ export function processBatchUpload(
 
     return { ids, previewUrl, srcSetThumb, result };
   });
-
-  chain = run.catch(() => {});
-  return run;
 }

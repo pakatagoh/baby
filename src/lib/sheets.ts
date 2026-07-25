@@ -1,14 +1,11 @@
 import { google } from "googleapis";
 import type { sheets_v4 } from "googleapis";
 import { readFileSync } from "node:fs";
+import { currentSgtISO } from "./frozen-date";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/** Current time as ISO 8601 in SGT (+08:00), matching the Python scripts. */
-function sgtISO(): string {
-  const now = new Date(Date.now() + 8 * 60 * 60 * 1000);
-  return now.toISOString().replace("Z", "+08:00");
-}
+const sgtISO = currentSgtISO;
 
 // ─── Abstract storage interface ─────────────────────────────────────────────
 

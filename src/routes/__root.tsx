@@ -6,6 +6,7 @@ import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import BottomNav from '../components/BottomNav'
 import { UploadModal } from '../components/UploadModal'
+import { ManualEntryModal } from '../components/ManualEntryModal'
 
 import appCss from '../styles.css?url'
 
@@ -72,6 +73,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
 
   return (
     <html lang="en">
@@ -80,11 +82,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased">
         <div className="pb-20 [@media(display-mode:standalone)]:pb-28">{children}</div>
-        <BottomNav onFileSelected={setSelectedFile} />
+        <BottomNav
+          onFileSelected={setSelectedFile}
+          onManualEntry={() => setManualEntryOpen(true)}
+        />
         <UploadModal
           file={selectedFile}
           onClose={() => setSelectedFile(null)}
         />
+        {manualEntryOpen && (
+          <ManualEntryModal onClose={() => setManualEntryOpen(false)} />
+        )}
         <TanStackDevtools
           config={{
             position: 'bottom-right',
