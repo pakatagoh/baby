@@ -7,18 +7,38 @@ import type { MilkSheetEntry } from "@/lib/sheets";
 import { MilkBottlePlaceholder } from "@/components/svg/MilkBottlePlaceholder";
 import { formatFrozenDate } from "@/lib/frozen-date";
 
-function timeAgo(iso: string): string {
-  const now = Date.now();
-  const then = Date.parse(iso);
-  if (Number.isNaN(then)) return "";
-  const seconds = Math.floor((now - then) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+function formatActivityTime(iso: string): string {
+  const occurredAt = new Date(iso);
+  if (Number.isNaN(occurredAt.getTime())) return "";
+
+  const elapsedMinutes = Math.floor((Date.now() - occurredAt.getTime()) / 60_000);
+  if (elapsedMinutes < 1) return "just now";
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m ago`;
+
+  const timeZone = "Asia/Singapore";
+  const time = new Intl.DateTimeFormat("en-SG", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(occurredAt);
+  const dateKeyFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const isToday = dateKeyFormatter.format(occurredAt) === dateKeyFormatter.format(new Date());
+
+  if (isToday) return `Today at ${time}`;
+
+  const date = new Intl.DateTimeFormat("en-SG", {
+    timeZone,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(occurredAt);
+  return `${date} at ${time}`;
 }
 
 function formatActivity(eventType: string, entry?: MilkSheetEntry): string {
@@ -85,7 +105,7 @@ export function ActivityPage() {
                     {formatActivity(act.eventType, entry)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {timeAgo(act.createdAt)}
+                    {formatActivityTime(act.createdAt)}
                   </p>
                 </div>
               </div>
