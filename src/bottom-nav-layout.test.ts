@@ -6,7 +6,7 @@ const readSource = (path: string) =>
   readFileSync(new URL(path, root), "utf8");
 
 describe("bottom navigation layout contract", () => {
-  it("uses one shared height for the nav, its action bar offset, and page clearance", () => {
+  it("renders the batch action directly above the bottom nav without an independent bottom offset", () => {
     const styles = readSource("styles.css");
     const bottomNav = readSource("components/BottomNav.tsx");
     const batchActionBar = readSource("pages/storage/BatchActionBar.tsx");
@@ -14,13 +14,11 @@ describe("bottom navigation layout contract", () => {
 
     expect(styles).toContain("--bottom-nav-height: 4rem;");
     expect(styles).toContain("--bottom-nav-height: 6rem;");
-    expect(styles).toContain("--batch-action-bottom: var(--bottom-nav-height);");
-    expect(styles).toContain("@supports (bottom: env(safe-area-inset-bottom))");
-    expect(styles).toContain(
-      "--batch-action-bottom: calc(var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px));",
-    );
-    expect(bottomNav).toContain("h-(--bottom-nav-height)");
-    expect(batchActionBar).toContain("bottom-(--batch-action-bottom)");
+    expect(styles).not.toContain("--batch-action-bottom");
+    expect(bottomNav).toContain('id="bottom-nav-batch-action-slot"');
+    expect(bottomNav).toContain("absolute bottom-full left-0 right-0");
+    expect(batchActionBar).toContain('createPortal(content, target)');
+    expect(batchActionBar).not.toContain("fixed bottom-");
     expect(rootRoute).toContain("pb-(--bottom-nav-height)");
   });
 });

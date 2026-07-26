@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { createPortal } from "react-dom";
 
 interface BatchActionBarProps {
   selectedCount: number;
@@ -9,8 +10,13 @@ interface BatchActionBarProps {
 export function BatchActionBar({ selectedCount, onMarkUsed, busy }: BatchActionBarProps) {
   if (selectedCount === 0) return null;
 
-  return (
-    <div className="fixed bottom-(--batch-action-bottom) left-0 right-0 z-40 border-t bg-white px-4 py-3.5 shadow-lg">
+  const target = typeof document === "undefined"
+    ? null
+    : document.getElementById("bottom-nav-batch-action-slot");
+  if (!target) return null;
+
+  const content = (
+    <div className="border-t bg-white px-4 py-3.5 shadow-lg">
       <div className="mx-auto flex max-w-4xl items-center justify-between">
         <span className="text-sm font-medium">{selectedCount} selected</span>
         <Button onClick={onMarkUsed} disabled={busy} variant="default" size="default" className="bg-primary text-primary-foreground hover:bg-primary/80">
@@ -19,4 +25,6 @@ export function BatchActionBar({ selectedCount, onMarkUsed, busy }: BatchActionB
       </div>
     </div>
   );
+
+  return createPortal(content, target);
 }

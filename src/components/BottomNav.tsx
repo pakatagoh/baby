@@ -64,6 +64,10 @@ export default function BottomNav({ onFileSelected, onManualEntry }: BottomNavPr
                    backdrop-blur-lg
                    pb-[env(safe-area-inset-bottom,0px)]"
       >
+        <div
+          id="bottom-nav-batch-action-slot"
+          className="absolute bottom-full left-0 right-0"
+        />
         <div className="mx-auto flex h-(--bottom-nav-height) max-w-4xl items-center justify-around px-2 [@media(display-mode:standalone)]:items-start [@media(display-mode:standalone)]:pt-2">
           {navItems.map((item) =>
             item.cta ? (

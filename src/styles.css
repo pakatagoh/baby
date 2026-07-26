@@ -31,7 +31,6 @@
 @layer base {
   :root {
     --bottom-nav-height: 4rem;
-    --batch-action-bottom: var(--bottom-nav-height);
     --background: 30 25% 98%;
     --foreground: 30 10% 15%;
     --card: 0 0% 100%;
@@ -56,12 +55,6 @@
     --expiry-orange: 25 86% 66%;
     --expiry-yellow: 45 86% 62%;
     --expiry-green: 97 32% 57%;
-  }
-}
-
-@supports (bottom: env(safe-area-inset-bottom)) {
-  :root {
-    --batch-action-bottom: calc(var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px));
   }
 }
 
