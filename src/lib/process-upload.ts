@@ -110,14 +110,12 @@ export async function processBatchUpload(
       usedAt: "",
     });
     ids.push(id);
+    await appendActivity({
+      eventType: "milk_frozen",
+      frozenMilkEntryId: id,
+    });
   }
   console.log("[process-upload] batch: sheet done, ids:", ids);
-
-  // Log one event for the batch
-  await appendActivity({
-    eventType: "milk_frozen",
-    frozenMilkEntryId: ids[0],
-  });
 
   return { ids, previewUrl, srcSetThumb, result };
 }
