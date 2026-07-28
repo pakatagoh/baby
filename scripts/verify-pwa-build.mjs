@@ -25,6 +25,13 @@ assert.match(registration, /scope:\s*["']\/["']/, "registerSW.js must use the ro
 assert.doesNotMatch(worker, /self\.define/, "sw.js must be the bundled custom worker, not generateSW output");
 assert.doesNotMatch(worker, /self\.__WB_MANIFEST/, "sw.js must have an injected precache manifest");
 assert.match(worker, /manifest\.webmanifest/, "sw.js must precache the web manifest");
+const rootPrecacheEntry = worker.match(/\{[^{}]*["']url["']:\s*["']\/["'][^{}]*\}/)?.[0];
+assert.ok(rootPrecacheEntry, "sw.js must precache the root app shell");
+assert.match(
+  rootPrecacheEntry,
+  /["']revision["']:\s*["'][^"']+["']/,
+  "the root app shell precache entry must have a non-empty revision",
+);
 assert.match(worker, /assets\/[^"']+\.css/, "sw.js must precache a CSS asset");
 assert.match(worker, /assets\/[^"']+\.js/, "sw.js must precache a JavaScript asset");
 assert.doesNotMatch(worker, /addEventListener\(["']push["']/, "Phase 1 worker must not have a push handler");

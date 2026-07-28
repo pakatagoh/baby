@@ -18,7 +18,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
 registerRoute(
-  new NavigationRoute(createHandlerBoundToURL("index.html"), {
+  new NavigationRoute(createHandlerBoundToURL("/"), {
     denylist: [/^\/api(?:\/|$)/, /^\/img(?:\/|$)/],
   }),
 );

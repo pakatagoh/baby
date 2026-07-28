@@ -8,6 +8,8 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+const APP_SHELL_REVISION = new Date().toISOString();
+
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
@@ -46,6 +48,7 @@ const config = defineConfig({
       injectManifest: {
         globDirectory: ".output/public",
         globPatterns: ["**/*.{js,css,html,png,svg,ico,webmanifest}"],
+        additionalManifestEntries: [{ url: "/", revision: APP_SHELL_REVISION }],
       },
     }),
   ],
