@@ -17,6 +17,9 @@ const config = defineConfig({
     nitro(),
     viteReact(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "autoUpdate",
       outDir: ".output/public",
       devOptions: {
@@ -40,10 +43,9 @@ const config = defineConfig({
           outDir: ".output/public",
         },
       },
-      workbox: {
+      injectManifest: {
         globDirectory: ".output/public",
         globPatterns: ["**/*.{js,css,html,png,svg,ico,webmanifest}"],
-        cleanupOutdatedCaches: true,
       },
     }),
   ],
