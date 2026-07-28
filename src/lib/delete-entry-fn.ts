@@ -8,6 +8,7 @@ const ORIGINALS = process.env.IMAGE_ORIGINALS_DIR || "/images/originals";
 
 const DeleteEntrySchema = z.object({
   rowIndex: z.number().int().positive(),
+  entryId: z.string().min(1),
   imageUrl: z.string().optional(),
 });
 
@@ -34,7 +35,12 @@ export const deleteMilkEntry = createServerFn({ method: "POST" })
       }
     }
 
-    // 2. Delete the row from Google Sheets
+    // 2. Remove all activity events that reference this entry before deleting
+    // the entry itself, so a successful deletion never leaves orphaned events.
+    const { deleteActivitiesForFrozenMilkEntry } = await import("./activity-log");
+    await deleteActivitiesForFrozenMilkEntry(data.entryId);
+
+    // 3. Delete the row from Google Sheets.
     const { deleteEntry } = await import("./sheets");
     await deleteEntry(data.rowIndex);
   });

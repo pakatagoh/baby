@@ -82,6 +82,7 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
       await deleteFn({
         data: {
           rowIndex: entry.rowIndex,
+          entryId: entry.id,
           imageUrl: entry.imageUrl || undefined,
         },
       });

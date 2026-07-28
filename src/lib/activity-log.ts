@@ -35,6 +35,15 @@ function getSheetsClient(): sheets_v4.Sheets {
   return google.sheets({ version: "v4", auth });
 }
 
+export function getActivityRowIndexes(
+  rows: unknown[][],
+  frozenMilkEntryId: string,
+): number[] {
+  return rows.flatMap((row, index) =>
+    String(row[3] ?? "") === frozenMilkEntryId ? [index + 2] : [],
+  );
+}
+
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /** Read all events, newest first. */
@@ -86,4 +95,49 @@ export async function appendActivity(activity: {
     eventType: activity.eventType,
     frozenMilkEntryId: activity.frozenMilkEntryId ?? null,
   };
+}
+
+/** Delete every activity event associated with a frozen-milk entry. */
+export async function deleteActivitiesForFrozenMilkEntry(
+  frozenMilkEntryId: string,
+): Promise<void> {
+  const spreadsheetId = requireEnv("GOOGLE_SHEET_ID");
+  const sheets = getSheetsClient();
+  const result = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: "'app events'!A2:D",
+  });
+
+  const rowIndexes = getActivityRowIndexes(
+    result.data.values ?? [],
+    frozenMilkEntryId,
+  );
+  if (rowIndexes.length === 0) return;
+
+  const metadata = await sheets.spreadsheets.get({ spreadsheetId });
+  const activitySheetId = metadata.data.sheets?.find(
+    (sheet) => sheet.properties?.title === "app events",
+  )?.properties?.sheetId;
+  if (activitySheetId === undefined) {
+    throw new Error('Sheet tab "app events" not found');
+  }
+
+  // Delete from the bottom upward so earlier row indexes stay valid.
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: rowIndexes
+        .sort((a, b) => b - a)
+        .map((rowIndex) => ({
+          deleteDimension: {
+            range: {
+              sheetId: activitySheetId,
+              dimension: "ROWS",
+              startIndex: rowIndex - 1,
+              endIndex: rowIndex,
+            },
+          },
+        })),
+    },
+  });
 }

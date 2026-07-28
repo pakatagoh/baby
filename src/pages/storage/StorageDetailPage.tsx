@@ -62,6 +62,7 @@ export function StorageDetailPage({ entry }: { entry: MilkSheetEntry }) {
       await deleteFn({
         data: {
           rowIndex: entry.rowIndex,
+          entryId: entry.id,
           imageUrl: entry.imageUrl || undefined,
         },
       });
