@@ -7,14 +7,14 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-export const Route = createFileRoute("/api/health")({
+export const Route = createFileRoute("/api/health/ready")({
   server: {
     handlers: {
       GET: async () => {
         try {
-          const { checkDatabase } = await import("../../lib/db-health");
+          const { checkDatabase } = await import("../../../lib/db-health");
           checkDatabase();
-          return json({ status: "ok", timestamp: new Date().toISOString() });
+          return json({ status: "ready" });
         } catch {
           return json({ status: "unready" }, 503);
         }

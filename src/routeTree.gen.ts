@@ -9,31 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as StorageRouteImport } from './routes/storage'
-import { Route as StatsRouteImport } from './routes/stats'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StorageIndexRouteImport } from './routes/storage.index'
-import { Route as SettingsIndexRouteImport } from './routes/settings.index'
-import { Route as StorageIdRouteImport } from './routes/storage.$id'
-import { Route as SettingsSortRouteImport } from './routes/settings.sort'
-import { Route as SettingsBabyRouteImport } from './routes/settings.baby'
+import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as StatsRouteImport } from './routes/stats'
+import { Route as StorageRouteImport } from './routes/storage'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SettingsBabyRouteImport } from './routes/settings.baby'
+import { Route as SettingsSortRouteImport } from './routes/settings.sort'
+import { Route as StorageIndexRouteImport } from './routes/storage.index'
+import { Route as StorageIdRouteImport } from './routes/storage.$id'
+import { Route as ApiHealthLiveRouteImport } from './routes/api/health/live'
+import { Route as ApiHealthReadyRouteImport } from './routes/api/health/ready'
+import { Route as ApiHealthStartupRouteImport } from './routes/api/health/startup'
 
-const StorageRoute = StorageRouteImport.update({
-  id: '/storage',
-  path: '/storage',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StatsRoute = StatsRouteImport.update({
-  id: '/stats',
-  path: '/stats',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivityRoute = ActivityRouteImport.update({
@@ -41,29 +34,29 @@ const ActivityRoute = ActivityRouteImport.update({
   path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StorageIndexRoute = StorageIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => StorageRoute,
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StorageRoute = StorageRouteImport.update({
+  id: '/storage',
+  path: '/storage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const StorageIdRoute = StorageIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => StorageRoute,
-} as any)
-const SettingsSortRoute = SettingsSortRouteImport.update({
-  id: '/sort',
-  path: '/sort',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsBabyRoute = SettingsBabyRouteImport.update({
@@ -71,10 +64,35 @@ const SettingsBabyRoute = SettingsBabyRouteImport.update({
   path: '/baby',
   getParentRoute: () => SettingsRoute,
 } as any)
-const ApiHealthRoute = ApiHealthRouteImport.update({
-  id: '/api/health',
-  path: '/api/health',
-  getParentRoute: () => rootRouteImport,
+const SettingsSortRoute = SettingsSortRouteImport.update({
+  id: '/sort',
+  path: '/sort',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const StorageIndexRoute = StorageIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StorageRoute,
+} as any)
+const StorageIdRoute = StorageIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => StorageRoute,
+} as any)
+const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => ApiHealthRoute,
+} as any)
+const ApiHealthReadyRoute = ApiHealthReadyRouteImport.update({
+  id: '/ready',
+  path: '/ready',
+  getParentRoute: () => ApiHealthRoute,
+} as any)
+const ApiHealthStartupRoute = ApiHealthStartupRouteImport.update({
+  id: '/startup',
+  path: '/startup',
+  getParentRoute: () => ApiHealthRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -83,23 +101,29 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/stats': typeof StatsRoute
   '/storage': typeof StorageRouteWithChildren
-  '/api/health': typeof ApiHealthRoute
+  '/api/health': typeof ApiHealthRouteWithChildren
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/sort': typeof SettingsSortRoute
   '/storage/$id': typeof StorageIdRoute
   '/settings/': typeof SettingsIndexRoute
   '/storage/': typeof StorageIndexRoute
+  '/api/health/live': typeof ApiHealthLiveRoute
+  '/api/health/ready': typeof ApiHealthReadyRoute
+  '/api/health/startup': typeof ApiHealthStartupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/stats': typeof StatsRoute
-  '/api/health': typeof ApiHealthRoute
+  '/api/health': typeof ApiHealthRouteWithChildren
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/sort': typeof SettingsSortRoute
   '/storage/$id': typeof StorageIdRoute
   '/settings': typeof SettingsIndexRoute
   '/storage': typeof StorageIndexRoute
+  '/api/health/live': typeof ApiHealthLiveRoute
+  '/api/health/ready': typeof ApiHealthReadyRoute
+  '/api/health/startup': typeof ApiHealthStartupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -108,12 +132,15 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/stats': typeof StatsRoute
   '/storage': typeof StorageRouteWithChildren
-  '/api/health': typeof ApiHealthRoute
+  '/api/health': typeof ApiHealthRouteWithChildren
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/sort': typeof SettingsSortRoute
   '/storage/$id': typeof StorageIdRoute
   '/settings/': typeof SettingsIndexRoute
   '/storage/': typeof StorageIndexRoute
+  '/api/health/live': typeof ApiHealthLiveRoute
+  '/api/health/ready': typeof ApiHealthReadyRoute
+  '/api/health/startup': typeof ApiHealthStartupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,6 +156,9 @@ export interface FileRouteTypes {
     | '/storage/$id'
     | '/settings/'
     | '/storage/'
+    | '/api/health/live'
+    | '/api/health/ready'
+    | '/api/health/startup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,6 +170,9 @@ export interface FileRouteTypes {
     | '/storage/$id'
     | '/settings'
     | '/storage'
+    | '/api/health/live'
+    | '/api/health/ready'
+    | '/api/health/startup'
   id:
     | '__root__'
     | '/'
@@ -153,6 +186,9 @@ export interface FileRouteTypes {
     | '/storage/$id'
     | '/settings/'
     | '/storage/'
+    | '/api/health/live'
+    | '/api/health/ready'
+    | '/api/health/startup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -161,30 +197,16 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRouteWithChildren
   StatsRoute: typeof StatsRoute
   StorageRoute: typeof StorageRouteWithChildren
-  ApiHealthRoute: typeof ApiHealthRoute
+  ApiHealthRoute: typeof ApiHealthRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/storage': {
-      id: '/storage'
-      path: '/storage'
-      fullPath: '/storage'
-      preLoaderRoute: typeof StorageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stats': {
-      id: '/stats'
-      path: '/stats'
-      fullPath: '/stats'
-      preLoaderRoute: typeof StatsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activity': {
@@ -194,39 +216,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/storage/': {
-      id: '/storage/'
-      path: '/'
-      fullPath: '/storage/'
-      preLoaderRoute: typeof StorageIndexRouteImport
-      parentRoute: typeof StorageRoute
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/storage': {
+      id: '/storage'
+      path: '/storage'
+      fullPath: '/storage'
+      preLoaderRoute: typeof StorageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/settings/': {
       id: '/settings/'
       path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/storage/$id': {
-      id: '/storage/$id'
-      path: '/$id'
-      fullPath: '/storage/$id'
-      preLoaderRoute: typeof StorageIdRouteImport
-      parentRoute: typeof StorageRoute
-    }
-    '/settings/sort': {
-      id: '/settings/sort'
-      path: '/sort'
-      fullPath: '/settings/sort'
-      preLoaderRoute: typeof SettingsSortRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/baby': {
@@ -236,12 +258,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsBabyRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/api/health': {
-      id: '/api/health'
-      path: '/api/health'
-      fullPath: '/api/health'
-      preLoaderRoute: typeof ApiHealthRouteImport
-      parentRoute: typeof rootRouteImport
+    '/settings/sort': {
+      id: '/settings/sort'
+      path: '/sort'
+      fullPath: '/settings/sort'
+      preLoaderRoute: typeof SettingsSortRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/storage/': {
+      id: '/storage/'
+      path: '/'
+      fullPath: '/storage/'
+      preLoaderRoute: typeof StorageIndexRouteImport
+      parentRoute: typeof StorageRoute
+    }
+    '/storage/$id': {
+      id: '/storage/$id'
+      path: '/$id'
+      fullPath: '/storage/$id'
+      preLoaderRoute: typeof StorageIdRouteImport
+      parentRoute: typeof StorageRoute
+    }
+    '/api/health/live': {
+      id: '/api/health/live'
+      path: '/live'
+      fullPath: '/api/health/live'
+      preLoaderRoute: typeof ApiHealthLiveRouteImport
+      parentRoute: typeof ApiHealthRoute
+    }
+    '/api/health/ready': {
+      id: '/api/health/ready'
+      path: '/ready'
+      fullPath: '/api/health/ready'
+      preLoaderRoute: typeof ApiHealthReadyRouteImport
+      parentRoute: typeof ApiHealthRoute
+    }
+    '/api/health/startup': {
+      id: '/api/health/startup'
+      path: '/startup'
+      fullPath: '/api/health/startup'
+      preLoaderRoute: typeof ApiHealthStartupRouteImport
+      parentRoute: typeof ApiHealthRoute
     }
   }
 }
@@ -275,14 +332,39 @@ const StorageRouteChildren: StorageRouteChildren = {
 const StorageRouteWithChildren =
   StorageRoute._addFileChildren(StorageRouteChildren)
 
+interface ApiHealthRouteChildren {
+  ApiHealthLiveRoute: typeof ApiHealthLiveRoute
+  ApiHealthReadyRoute: typeof ApiHealthReadyRoute
+  ApiHealthStartupRoute: typeof ApiHealthStartupRoute
+}
+
+const ApiHealthRouteChildren: ApiHealthRouteChildren = {
+  ApiHealthLiveRoute: ApiHealthLiveRoute,
+  ApiHealthReadyRoute: ApiHealthReadyRoute,
+  ApiHealthStartupRoute: ApiHealthStartupRoute,
+}
+
+const ApiHealthRouteWithChildren = ApiHealthRoute._addFileChildren(
+  ApiHealthRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
   SettingsRoute: SettingsRouteWithChildren,
   StatsRoute: StatsRoute,
   StorageRoute: StorageRouteWithChildren,
-  ApiHealthRoute: ApiHealthRoute,
+  ApiHealthRoute: ApiHealthRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

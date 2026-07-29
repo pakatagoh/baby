@@ -38,7 +38,7 @@ const config = defineConfig({
     devtools(),
     tailwindcss(),
     tanstackStart(),
-    nitro(),
+    nitro({ plugins: ["./plugins/database.ts"] }),
     viteReact(),
     ...generatePwaWorkerOnlyForClient(
       VitePWA({
