@@ -393,14 +393,6 @@ The deployment is GitOps-driven from the **homelab repo**, not this one.
    image-automation pick it up if you push a semver tag).
 3. Push to the homelab repo — Flux reconciles automatically.
 
-The private homelab repo also deploys Drizzle Gateway in the `baby` namespace
-for operational inspection of the live SQLite database. It uses the official
-`ghcr.io/drizzle-team/gateway` image, mounts the production database at
-`/data/baby.sqlite`, and is exposed through the same private Traefik ingress
-pattern at `https://baby-drizzle.pakatagoh.com`. Gateway access is protected by
-its own SOPS-managed `MASTERPASS`; do not add Gateway credentials to this app
-repository.
-
 ## Known gotchas
 
 - **imgproxy caching:** The server-side processing cache (`IMGPROXY_CACHE_USE`)

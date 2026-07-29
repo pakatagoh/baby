@@ -221,21 +221,6 @@ The Baby app also mounts `/opt/baby/data` at `/data` in production. The SQLite
 database is `/data/baby.sqlite`; the directory also contains SQLite's WAL and
 SHM files. The database is persistent across pod replacement.
 
-### Drizzle Gateway administration
-
-The private homelab repo deploys the official
-[`ghcr.io/drizzle-team/gateway`](https://gateway.drizzle.team/) image as a
-separate HelmRelease in the `baby` namespace. It mounts the live production
-database at `/data/baby.sqlite` and Gateway configuration at `/app`.
-
-Gateway is available at `https://baby-drizzle.pakatagoh.com` through the same
-Traefik + cert-manager pattern as the Baby app. The hostname resolves to the
-private node address and is intended for home-network/Tailscale access only.
-Access requires the Gateway `MASTERPASS`, which is stored in the private
-homelab repo as a SOPS/age-encrypted Kubernetes Secret. Gateway is an
-administrative interface to the live database; avoid destructive edits and
-schema changes from Studio.
-
 ## API
 
 ### `GET /api/health/live`
