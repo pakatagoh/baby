@@ -1,7 +1,54 @@
 import { createServerFn } from "@tanstack/react-start";
+import { deviceUsers, type DeviceUser } from "./notification-schema";
 
 export interface PublicVapidKeyResponse {
   vapidPublicKey: string;
+}
+
+export interface DeviceProfileInput {
+  deviceId: string;
+  user: DeviceUser;
+}
+
+export function parseDeviceProfileInput(data: unknown): DeviceProfileInput {
+  const input = (data ?? {}) as Record<string, unknown>;
+  const deviceId = requiredString(input, "deviceId");
+  const user = requiredString(input, "user");
+  if (!(deviceUsers as readonly string[]).includes(user)) {
+    throw new Error("user must be pakata or isabel");
+  }
+  return { deviceId, user: user as DeviceUser };
+}
+
+export interface PushSubscriptionInput {
+  deviceId: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+export interface DisablePushInput {
+  deviceId: string;
+}
+
+function requiredString(input: Record<string, unknown>, name: string): string {
+  const value = String(input[name] ?? "").trim();
+  if (!value) throw new Error(`${name} is required`);
+  return value;
+}
+
+export function parsePushSubscriptionInput(data: unknown): PushSubscriptionInput {
+  const input = (data ?? {}) as Record<string, unknown>;
+  return {
+    deviceId: requiredString(input, "deviceId"),
+    endpoint: requiredString(input, "endpoint"),
+    p256dh: requiredString(input, "p256dh"),
+    auth: requiredString(input, "auth"),
+  };
+}
+
+export function parseDisablePushInput(data: unknown): DisablePushInput {
+  return { deviceId: requiredString((data ?? {}) as Record<string, unknown>, "deviceId") };
 }
 
 export function publicVapidKeyResponse(vapidPublicKey: string): PublicVapidKeyResponse {
@@ -17,3 +64,46 @@ export const getVapidPublicKey = createServerFn({ method: "GET" }).handler(
     return publicVapidKeyResponse(readPublicKey());
   },
 );
+
+/** Register the browser's household convenience identity in SQLite. */
+export const registerDeviceProfile = createServerFn({ method: "POST" })
+  .validator(parseDeviceProfileInput)
+  .handler(async ({ data }) => {
+    const [{ getDatabase }, { upsertDeviceProfile }] = await Promise.all([
+      import("./db"),
+      import("./notification-repository"),
+    ]);
+    upsertDeviceProfile(getDatabase().db, { id: data.deviceId, user: data.user });
+    return data;
+  });
+
+/** Register or replace one browser push subscription. */
+export const registerPushSubscription = createServerFn({ method: "POST" })
+  .validator(parsePushSubscriptionInput)
+  .handler(async ({ data }) => {
+    const [{ getDatabase }, repository] = await Promise.all([
+      import("./db"),
+      import("./notification-repository"),
+    ]);
+    const db = getDatabase().db;
+    if (!repository.deviceProfileExists(db, data.deviceId)) {
+      throw new Error("Unknown device profile");
+    }
+    return repository.upsertPushSubscription(db, {
+      deviceProfileId: data.deviceId,
+      endpoint: data.endpoint,
+      p256dh: data.p256dh,
+      auth: data.auth,
+    });
+  });
+
+export const disablePushSubscription = createServerFn({ method: "POST" })
+  .validator(parseDisablePushInput)
+  .handler(async ({ data }) => {
+    const [{ getDatabase }, { disablePushSubscriptionsForDevice }] = await Promise.all([
+      import("./db"),
+      import("./notification-repository"),
+    ]);
+    disablePushSubscriptionsForDevice(getDatabase().db, data.deviceId);
+    return { deviceId: data.deviceId, enabled: false };
+  });

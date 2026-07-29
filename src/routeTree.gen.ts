@@ -17,6 +17,7 @@ import { Route as StorageRouteImport } from './routes/storage'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as SettingsBabyRouteImport } from './routes/settings.baby'
+import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as SettingsSortRouteImport } from './routes/settings.sort'
 import { Route as StorageIndexRouteImport } from './routes/storage.index'
 import { Route as StorageIdRouteImport } from './routes/storage.$id'
@@ -64,6 +65,11 @@ const SettingsBabyRoute = SettingsBabyRouteImport.update({
   path: '/baby',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsSortRoute = SettingsSortRouteImport.update({
   id: '/sort',
   path: '/sort',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/storage': typeof StorageRouteWithChildren
   '/api/health': typeof ApiHealthRouteWithChildren
   '/settings/baby': typeof SettingsBabyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/sort': typeof SettingsSortRoute
   '/storage/$id': typeof StorageIdRoute
   '/settings/': typeof SettingsIndexRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/stats': typeof StatsRoute
   '/api/health': typeof ApiHealthRouteWithChildren
   '/settings/baby': typeof SettingsBabyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/sort': typeof SettingsSortRoute
   '/storage/$id': typeof StorageIdRoute
   '/settings': typeof SettingsIndexRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/storage': typeof StorageRouteWithChildren
   '/api/health': typeof ApiHealthRouteWithChildren
   '/settings/baby': typeof SettingsBabyRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/sort': typeof SettingsSortRoute
   '/storage/$id': typeof StorageIdRoute
   '/settings/': typeof SettingsIndexRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/storage'
     | '/api/health'
     | '/settings/baby'
+    | '/settings/notifications'
     | '/settings/sort'
     | '/storage/$id'
     | '/settings/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/api/health'
     | '/settings/baby'
+    | '/settings/notifications'
     | '/settings/sort'
     | '/storage/$id'
     | '/settings'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/storage'
     | '/api/health'
     | '/settings/baby'
+    | '/settings/notifications'
     | '/settings/sort'
     | '/storage/$id'
     | '/settings/'
@@ -258,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsBabyRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/notifications': {
+      id: '/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof SettingsNotificationsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/sort': {
       id: '/settings/sort'
       path: '/sort'
@@ -305,12 +324,14 @@ declare module '@tanstack/react-router' {
 
 interface SettingsRouteChildren {
   SettingsBabyRoute: typeof SettingsBabyRoute
+  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   SettingsSortRoute: typeof SettingsSortRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsBabyRoute: SettingsBabyRoute,
+  SettingsNotificationsRoute: SettingsNotificationsRoute,
   SettingsSortRoute: SettingsSortRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }

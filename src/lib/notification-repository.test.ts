@@ -4,6 +4,7 @@ import { createDatabase } from "./db";
 import {
   createMilkEntryOutbox,
   disablePushSubscription,
+  disablePushSubscriptionsForDevice,
   getActiveSubscriptionsForUser,
   upsertDeviceProfile,
   upsertPushSubscription,
@@ -125,5 +126,24 @@ describe("notification repository", () => {
       enabled: 0,
       invalid_reason: "gone",
     });
+  });
+
+  it("disables all subscriptions for a device while retaining their rows", () => {
+    const handle = setupDatabase();
+    upsertDeviceProfile(handle.db, { id: "device-1", user: "pakata", now: "2026-07-29T00:00:00.000Z" });
+    upsertPushSubscription(handle.db, {
+      deviceProfileId: "device-1",
+      endpoint: "https://push.example/1",
+      p256dh: "p256dh-1",
+      auth: "auth-1",
+      now: "2026-07-29T00:00:00.000Z",
+    });
+
+    disablePushSubscriptionsForDevice(handle.db, "device-1", "disabled_by_user", "2026-07-29T00:02:00.000Z");
+
+    expect(getActiveSubscriptionsForUser(handle.db, "pakata")).toEqual([]);
+    expect(handle.sqlite.prepare("SELECT enabled, invalid_reason FROM push_subscriptions").all()).toEqual([
+      { enabled: 0, invalid_reason: "disabled_by_user" },
+    ]);
   });
 });

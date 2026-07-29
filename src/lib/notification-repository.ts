@@ -62,6 +62,12 @@ export function upsertDeviceProfile(db: NotificationDb, input: DeviceProfileInpu
     .run();
 }
 
+export function deviceProfileExists(db: NotificationDb, id: string): boolean {
+  return Boolean(
+    db.select({ id: deviceProfiles.id }).from(deviceProfiles).where(eq(deviceProfiles.id, id)).get(),
+  );
+}
+
 export function upsertPushSubscription(
   db: NotificationDb,
   input: PushSubscriptionInput,
@@ -144,6 +150,18 @@ export function disablePushSubscription(
   db.update(pushSubscriptions)
     .set({ enabled: false, invalidatedAt: now, invalidReason: reason, updatedAt: now })
     .where(eq(pushSubscriptions.id, id))
+    .run();
+}
+
+export function disablePushSubscriptionsForDevice(
+  db: NotificationDb,
+  deviceProfileId: string,
+  reason = "disabled_by_user",
+  now = new Date().toISOString(),
+): void {
+  db.update(pushSubscriptions)
+    .set({ enabled: false, invalidatedAt: now, invalidReason: reason, updatedAt: now })
+    .where(eq(pushSubscriptions.deviceProfileId, deviceProfileId))
     .run();
 }
 
