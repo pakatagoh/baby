@@ -30,19 +30,69 @@ function entry(overrides: Partial<MilkSheetEntry>): MilkSheetEntry {
 
 const entries = [
   entry({ id: "frozen-in-range", amount: 100 }),
-  entry({ id: "used-in-range", amount: 120, used: true, totalFrozen: 0, totalUsed: 1 }),
-  entry({ id: "frozen-outside-range", frozenAt: "2026-07-20T10:00:00+08:00", amount: 120 }),
+  entry({
+    id: "used-in-range",
+    amount: 120,
+    used: true,
+    totalFrozen: 0,
+    totalUsed: 1,
+    usedAt: "2026-07-10T14:00:00+08:00",
+  }),
+  entry({
+    id: "frozen-outside-range",
+    frozenAt: "2026-07-20T10:00:00+08:00",
+    amount: 120,
+  }),
+  entry({
+    id: "frozen-outside-range-used-in-range",
+    frozenAt: "2026-07-20T10:00:00+08:00",
+    used: true,
+    totalFrozen: 0,
+    totalUsed: 1,
+    usedAt: "2026-07-10T15:00:00+08:00",
+    amount: 120,
+  }),
+  entry({
+    id: "events-straddle-range",
+    frozenAt: "2026-07-09T10:00:00+08:00",
+    used: true,
+    totalFrozen: 0,
+    totalUsed: 1,
+    usedAt: "2026-07-11T10:00:00+08:00",
+  }),
 ];
 
 describe("storage filtering", () => {
-  it("returns tab counts from the entries matching an inclusive date range", () => {
+  it("returns tab counts from entries matching an inclusive date range", () => {
     const filteredEntries = filterStorageEntries(entries, {
       ...noFilter,
       dateStart: "2026-07-10",
       dateEnd: "2026-07-10",
     });
 
-    expect(getStorageTabCounts(filteredEntries)).toEqual({ all: 2, frozen: 1, used: 1 });
+    expect(getStorageTabCounts(filteredEntries)).toEqual({ all: 3, frozen: 1, used: 2 });
+  });
+
+  it("includes an entry when usedAt is in range even if frozenAt is outside it", () => {
+    const filteredEntries = filterStorageEntries(entries, {
+      ...noFilter,
+      dateStart: "2026-07-10",
+      dateEnd: "2026-07-10",
+    });
+
+    expect(filteredEntries.map((entry) => entry.id)).toContain(
+      "frozen-outside-range-used-in-range",
+    );
+  });
+
+  it("excludes entries when one event is before and the other is after the range", () => {
+    const filteredEntries = filterStorageEntries(entries, {
+      ...noFilter,
+      dateStart: "2026-07-10",
+      dateEnd: "2026-07-10",
+    });
+
+    expect(filteredEntries.map((entry) => entry.id)).not.toContain("events-straddle-range");
   });
 
   it("returns tab counts from entries matching the amount filter", () => {
@@ -52,7 +102,7 @@ describe("storage filtering", () => {
       amountVal: "120",
     });
 
-    expect(getStorageTabCounts(filteredEntries)).toEqual({ all: 2, frozen: 1, used: 1 });
+    expect(getStorageTabCounts(filteredEntries)).toEqual({ all: 3, frozen: 1, used: 2 });
   });
 
   it("returns zero for every tab when filters match no entries", () => {

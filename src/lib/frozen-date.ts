@@ -49,6 +49,17 @@ export function formatFrozenDateTime(entry: { frozenAt: string }): string {
   return `${formatFrozenDate(entry)} ${formatFrozenTime(entry)}`;
 }
 
+/** Format a usedAt timestamp as DD-Mon-YY HH:mm in Singapore time. */
+export function formatUsedAt(usedAt: string): string {
+  const parts = sgtParts(usedAt);
+  if (!parts) return "—";
+  const month = new Intl.DateTimeFormat("en-US", {
+    timeZone: SGT_TIME_ZONE,
+    month: "short",
+  }).format(new Date(usedAt));
+  return `${parts.day}-${month}-${parts.year.slice(-2)} ${parts.hour}:${parts.minute}`;
+}
+
 /** A YYYY-MM-DD value suitable for a native date input, in Singapore time. */
 export function frozenDateInput(entry: { frozenAt: string }): string {
   const parts = sgtParts(entry.frozenAt);

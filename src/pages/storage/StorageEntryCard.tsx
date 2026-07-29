@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { MilkBottlePlaceholder } from "@/components/svg/MilkBottlePlaceholder";
 import { ChevronRight } from "lucide-react";
-import { formatFrozenDate } from "@/lib/frozen-date";
+import { formatFrozenDate, formatUsedAt } from "@/lib/frozen-date";
 
 interface StorageEntryCardProps {
   entry: MilkSheetEntry;
@@ -73,6 +73,9 @@ export function StorageEntryCard({ entry, checked, onToggle, onOpenDetail }: Sto
           </Badge>
         </div>
         <p className="text-xs text-muted-foreground">Frozen {formatFrozenDate(entry)}</p>
+        {isUsed && entry.usedAt && (
+          <p className="text-xs text-muted-foreground">Used {formatUsedAt(entry.usedAt)}</p>
+        )}
         {!isUsed && expiryDate && days !== null && (
           <p className="text-xs">
             Expires {expiryDate}
