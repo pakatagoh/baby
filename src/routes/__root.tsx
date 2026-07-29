@@ -7,6 +7,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import BottomNav from '../components/BottomNav'
 import { UploadModal } from '../components/UploadModal'
 import { ManualEntryModal } from '../components/ManualEntryModal'
+import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration'
 
 import appCss from '../styles.css?url'
 
@@ -81,6 +82,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased">
+        <ServiceWorkerRegistration />
         <div className="pb-(--bottom-nav-height)">{children}</div>
         <BottomNav
           onFileSelected={setSelectedFile}
