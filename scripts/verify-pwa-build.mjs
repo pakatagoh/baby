@@ -49,6 +49,12 @@ assert.match(worker, /assets\/[^"']+\.css/, "sw.js must precache a CSS asset");
 assert.match(worker, /assets\/[^"']+\.js/, "sw.js must precache a JavaScript asset");
 assert.doesNotMatch(worker, /addEventListener\(["']push["']/, "Phase 1 worker must not have a push handler");
 
+const precacheUrls = Array.from(worker.matchAll(/\{"revision":(?:null|"[^"]*"),"url":"([^"]+)"\}/g)).map(
+  ([, url]) => url,
+);
+const duplicatePrecacheUrls = [...new Set(precacheUrls.filter((url, index) => precacheUrls.indexOf(url) !== index))];
+assert.deepEqual(duplicatePrecacheUrls, [], "sw.js must not precache a URL more than once");
+
 const nitroWorkerAsset = nitroServer.match(/"\/sw\.js":\s*\{[^}]*"size":\s*(\d+)/s);
 assert.ok(nitroWorkerAsset, "Nitro must include /sw.js in its public-asset manifest");
 assert.equal(

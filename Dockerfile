@@ -12,7 +12,7 @@ COPY . .
 # node_modules etc. from scanning. Without it, SSR and client builds produce
 # different CSS (issue tailwindlabs/tailwindcss#19888).
 ARG CACHE_BUST=0
-RUN rm -rf node_modules/.vite .output node_modules/.nitro && pnpm build
+RUN rm -rf node_modules/.vite .output node_modules/.nitro && pnpm build && pnpm verify:pwa
 
 # ─── Production stage ─────────────────────────────────────────
 FROM node:22-alpine

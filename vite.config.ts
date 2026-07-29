@@ -70,7 +70,7 @@ const config = defineConfig({
         },
         injectManifest: {
           globDirectory: ".output/public",
-          globPatterns: ["**/*.{js,css,html,png,svg,ico,webmanifest}"],
+          globPatterns: ["**/*.{js,css,html}"],
           additionalManifestEntries: [{ url: "/", revision: APP_SHELL_REVISION }],
         },
       }),
