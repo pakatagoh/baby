@@ -1,27 +1,34 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import assert from "node:assert/strict";
 
 const publicDir = resolve(".output/public");
 const workerPath = resolve(publicDir, "sw.js");
 const manifestPath = resolve(publicDir, "manifest.webmanifest");
-const registrationPath = resolve(publicDir, "registerSW.js");
+const assetsDir = resolve(publicDir, "assets");
 
-await Promise.all([
-  access(workerPath),
-  access(manifestPath),
-  access(registrationPath),
-]);
+await Promise.all([access(workerPath), access(manifestPath), access(assetsDir)]);
 
-const [worker, manifest, registration] = await Promise.all([
+const [worker, manifest, assetFilenames] = await Promise.all([
   readFile(workerPath, "utf8"),
   readFile(manifestPath, "utf8"),
-  readFile(registrationPath, "utf8"),
+  readdir(assetsDir),
 ]);
+const clientAssets = await Promise.all(
+  assetFilenames
+    .filter((filename) => filename.endsWith(".js"))
+    .map((filename) => readFile(resolve(assetsDir, filename), "utf8")),
+);
+const clientBundle = clientAssets.join("\n");
 
 assert.doesNotThrow(() => JSON.parse(manifest), "manifest.webmanifest must parse as JSON");
-assert.match(registration, /\/sw\.js/, "registerSW.js must register /sw.js");
-assert.match(registration, /scope:\s*["']\/["']/, "registerSW.js must use the root scope");
+assert.match(
+  clientBundle,
+  /serviceWorker\.register/,
+  "a built client asset must register the service worker",
+);
+assert.match(clientBundle, /\/sw\.js/, "the client registration must target /sw.js");
+assert.match(clientBundle, /scope:\s*[`"']\/[`"']/, "the client registration must use root scope");
 assert.doesNotMatch(worker, /self\.define/, "sw.js must be the bundled custom worker, not generateSW output");
 assert.doesNotMatch(worker, /self\.__WB_MANIFEST/, "sw.js must have an injected precache manifest");
 assert.match(worker, /manifest\.webmanifest/, "sw.js must precache the web manifest");
