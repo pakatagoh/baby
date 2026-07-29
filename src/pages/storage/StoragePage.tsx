@@ -11,23 +11,15 @@ import { SortDropdown, type SortKey } from "@/pages/storage/SortDropdown";
 import { StorageTabs } from "@/pages/storage/StorageTabs";
 import { StorageEntryCard } from "@/pages/storage/StorageEntryCard";
 import { BatchActionBar } from "@/pages/storage/BatchActionBar";
-import { FilterModal, type FilterState, type NumOp } from "@/pages/storage/FilterModal";
+import { FilterModal, type FilterState } from "@/pages/storage/FilterModal";
 import { EntryDetailModal } from "@/pages/storage/EntryDetailModal";
+import { filterStorageEntries, getStorageTabCounts } from "@/pages/storage/storage-filtering";
 import { fetchSortOption, sortOptionToSortKey } from "@/lib/app-settings-fn";
 
 type TabId = "all" | "frozen" | "used";
 
 function entryTimestamp(e: MilkSheetEntry): number {
   return getFrozenMs(e);
-}
-
-function matchesNumFilter(value: number, op: NumOp, raw: string): boolean {
-  if (raw === "") return true;
-  const target = Number(raw);
-  if (Number.isNaN(target)) return true;
-  if (op === "eq") return value === target;
-  if (op === "gte") return value >= target;
-  return value <= target;
 }
 
 const defaultFilter: FilterState = {
@@ -60,48 +52,30 @@ export function StoragePage() {
   const [selectedEntry, setSelectedEntry] = useState<MilkSheetEntry | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // ── Derived counts ────────────────────────────────────────────
-  const frozenCount = useMemo(
-    () => entries.filter((e) => !e.used).length,
-    [entries],
+  // ── Custom filter (date + amount) ─────────────────────────────
+  const filterMatchedEntries = useMemo(
+    () => filterStorageEntries(entries, filter),
+    [entries, filter],
   );
-  const usedCount = useMemo(
-    () => entries.filter((e) => e.used).length,
-    [entries],
+  const tabCounts = useMemo(
+    () => getStorageTabCounts(filterMatchedEntries),
+    [filterMatchedEntries],
   );
   const totalMl = useMemo(
-    () => entries.filter((e) => !e.used).reduce((sum, e) => sum + e.amount, 0),
+    () => entries.filter((entry) => !entry.used).reduce((sum, entry) => sum + entry.amount, 0),
     [entries],
   );
 
   // ── Tab filter ────────────────────────────────────────────────
   const tabbedEntries = useMemo(() => {
-    if (activeTab === "frozen") return entries.filter((e) => !e.used);
-    if (activeTab === "used") return entries.filter((e) => e.used);
-    return entries;
-  }, [entries, activeTab]);
-
-  // ── Custom filter (date + amount) ─────────────────────────────
-  const filteredEntries = useMemo(() => {
-    return tabbedEntries.filter((e) => {
-      if (filter.dateStart) {
-        const ts = getFrozenMs(e);
-        const start = Date.parse(filter.dateStart + "T00:00:00");
-        if (!Number.isNaN(ts) && ts < start) return false;
-      }
-      if (filter.dateEnd) {
-        const ts = getFrozenMs(e);
-        const end = Date.parse(filter.dateEnd + "T00:00:00") + 86_399_999;
-        if (!Number.isNaN(ts) && ts > end) return false;
-      }
-      if (!matchesNumFilter(e.amount, filter.amountOp, filter.amountVal)) return false;
-      return true;
-    });
-  }, [tabbedEntries, filter]);
+    if (activeTab === "frozen") return filterMatchedEntries.filter((e) => !e.used);
+    if (activeTab === "used") return filterMatchedEntries.filter((e) => e.used);
+    return filterMatchedEntries;
+  }, [filterMatchedEntries, activeTab]);
 
   // ── Sort ──────────────────────────────────────────────────────
   const sortedEntries = useMemo(() => {
-    const sorted = [...filteredEntries].sort((a, b) => {
+    const sorted = [...tabbedEntries].sort((a, b) => {
       switch (sortKey) {
         case "newest":
           return entryTimestamp(b) - entryTimestamp(a);
@@ -114,7 +88,7 @@ export function StoragePage() {
       }
     });
     return sorted;
-  }, [filteredEntries, sortKey]);
+  }, [tabbedEntries, sortKey]);
 
   // ── Selection ─────────────────────────────────────────────────
   const toggleSelect = useCallback((id: string) => {
@@ -155,9 +129,9 @@ export function StoragePage() {
           setActiveTab(tab);
           setSelectedIds(new Set());
         }}
-        totalCount={entries.length}
-        frozenCount={frozenCount}
-        usedCount={usedCount}
+        totalCount={tabCounts.all}
+        frozenCount={tabCounts.frozen}
+        usedCount={tabCounts.used}
       />
 
       {/* Sort + Filter row */}
