@@ -32,7 +32,8 @@ A web app for tracking frozen breast milk storage. Snap a photo of a milk packet
 | Image processing | [Sharp](https://sharp.pixelplumbing.com/) (resize + optimize on upload) |
 | Image serving | [imgproxy](https://imgproxy.net/) (on-the-fly resize/crop with signed URLs) |
 | Image caching | Browser/CDN via `Cache-Control: max-age=31536000` (1 year). imgproxy's server-side cache is [Pro-only](https://docs.imgproxy.net/cache/internal). |
-| Database | Google Sheets (yes, really — it's simple and shareable) |
+| Milk records | Google Sheets (yes, really — it's simple and shareable) |
+| Operational database | SQLite + [Drizzle ORM](https://orm.drizzle.team/) (`better-sqlite3`) |
 | Deployment | Docker → k3s (FluxCD + Helm) |
 
 ## Prerequisites
@@ -71,6 +72,7 @@ Fill in the required values in `.env`:
 | `IMGPROXY_BASE_URL` | Base URL for imgproxy (default: `http://localhost:8080/img` for dev, `http://localhost:3000/img` for Docker) |
 | `IMGPROXY_KEY` | 64-char hex key for imgproxy URL signing |
 | `IMGPROXY_SALT` | 64-char hex salt for imgproxy URL signing |
+| `DATABASE_PATH` | SQLite path for notification state (default: `./data/baby.sqlite` locally) |
 
 ### 3. Generate imgproxy keys
 
@@ -79,6 +81,42 @@ Fill in the required values in `.env`:
 ```
 
 This creates `IMGPROXY_KEY` and `IMGPROXY_SALT` and writes them into your `.env`.
+
+## Database architecture
+
+The app uses two storage systems deliberately:
+
+- **Google Sheets** remains the canonical store for frozen-milk records and
+  household data.
+- **SQLite/Drizzle** stores durable notification operational state:
+  `device_profiles`, `push_subscriptions`, `notification_outbox`, and
+  `notification_deliveries`.
+
+SQLite is opened server-side through one `better-sqlite3` connection. It uses
+WAL mode, foreign keys, and a bounded busy timeout. Pending Drizzle migrations
+run during application startup before the pod reports startup readiness.
+
+For local development, use a project-local path:
+
+```bash
+DATABASE_PATH=./data/baby.sqlite pnpm dev
+```
+
+Do not point local development at the production `/data/baby.sqlite` file.
+
+### Health endpoints
+
+Kubernetes uses separate health endpoints:
+
+| Endpoint | Meaning |
+|---|---|
+| `/api/health/live` | The server process is alive; no database query |
+| `/api/health/ready` | SQLite responds successfully to a health query |
+| `/api/health/startup` | Startup migrations completed and SQLite is healthy |
+
+Migrations are not run per request. The startup endpoint is backed by the
+SQLite migration table rather than only an in-memory flag, so it remains
+correct across Nitro bundles and process restarts.
 
 ### 4a. Local dev with hot reload
 
@@ -128,8 +166,13 @@ src/
 │   └── UploadPage.tsx       # Main page: camera, uploads, saved entries
 ├── lib/
 │   ├── ai.ts                # Vision model (reads milk packet labels)
+│   ├── db.ts                # Server-only SQLite/Drizzle connection owner
+│   ├── db-health.ts         # SQLite health query
+│   ├── db-migrations.ts     # Startup migration runner
 │   ├── entries-fn.ts        # Server function: fetch all entries
 │   ├── images.ts            # Image save + imgproxy URL generation
+│   ├── notification-schema.ts     # Notification-state Drizzle schema
+│   ├── notification-repository.ts # Notification persistence operations
 │   ├── process-upload.ts    # Upload pipeline (serialised queue)
 │   ├── sheets.ts            # Google Sheets read/write
 │   ├── upload-fn.ts         # Server function: upload + analyse
@@ -137,10 +180,13 @@ src/
 ├── routes/
 │   ├── __root.tsx           # Root layout (HTML shell, devtools)
 │   ├── index.tsx            # Home page route
-│   └── api/health.ts        # Health check endpoint
+│   └── api/health/           # live, ready, and startup health endpoints
 ├── router.tsx               # TanStack Router + Query client setup
 ├── routeTree.gen.ts         # Auto-generated route tree
 └── styles.css               # Tailwind entry point
+
+drizzle/
+└── 0000_*.sql               # Generated SQLite migrations
 
 docker-compose.yml           # Full stack: nginx + app + imgproxy
 docker-compose.dev.yml       # Dev override (app on host, imgproxy in Docker)
@@ -161,7 +207,8 @@ homelab/
 └── infrastructure/imgproxy/ # imgproxy HelmRelease, namespace
 ```
 
-Both services share a hostPath volume (`/mnt/media/images`) and are exposed behind a single Traefik ingress:
+The Baby app and imgproxy share a hostPath volume (`/mnt/media/images`) and are
+exposed behind a single Traefik ingress:
 
 | Path | Service | Port |
 |---|---|---|
@@ -170,10 +217,42 @@ Both services share a hostPath volume (`/mnt/media/images`) and are exposed behi
 
 The Docker Compose setup above mirrors this exactly with nginx standing in for Traefik.
 
+The Baby app also mounts `/opt/baby/data` at `/data` in production. The SQLite
+database is `/data/baby.sqlite`; the directory also contains SQLite's WAL and
+SHM files. The database is persistent across pod replacement.
+
+### Drizzle Gateway administration
+
+The private homelab repo deploys the official
+[`ghcr.io/drizzle-team/gateway`](https://gateway.drizzle.team/) image as a
+separate HelmRelease in the `baby` namespace. It mounts the live production
+database at `/data/baby.sqlite` and Gateway configuration at `/app`.
+
+Gateway is available at `https://baby-drizzle.pakatagoh.com` through the same
+Traefik + cert-manager pattern as the Baby app. The hostname resolves to the
+private node address and is intended for home-network/Tailscale access only.
+Access requires the Gateway `MASTERPASS`, which is stored in the private
+homelab repo as a SOPS/age-encrypted Kubernetes Secret. Gateway is an
+administrative interface to the live database; avoid destructive edits and
+schema changes from Studio.
+
 ## API
 
-### `GET /api/health`
+### `GET /api/health/live`
 
-Health check endpoint. Returns `{ "status": "ok", "timestamp": "…" }`.
+Process liveness endpoint. It does not query SQLite.
+
+### `GET /api/health/ready`
+
+Readiness endpoint. Returns success only when SQLite responds to its health
+query.
+
+### `GET /api/health/startup`
+
+Startup endpoint. Returns success only after migrations have completed and
+SQLite is healthy.
+
+`/api/health` remains as a compatibility endpoint where needed. Kubernetes
+uses the three dedicated endpoints above for startup, readiness, and liveness.
 
 Also available from imgproxy at `/img/health`.

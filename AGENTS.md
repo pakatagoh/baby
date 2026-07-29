@@ -7,7 +7,8 @@ before making changes.
 
 **Baby Tracker** — a web app for tracking frozen breast milk storage. Snap a
 photo of a milk packet → AI vision reads the handwritten label → image is
-saved + logged to a Google Sheet. Optimized images are served on the fly via
+saved + logged to a Google Sheet. SQLite/Drizzle stores local operational state
+for notifications. Optimized images are served on the fly via
 [imgproxy](https://imgproxy.net/).
 
 - **Framework:** [TanStack Start](https://tanstack.com/start) (React 19, SSR,
@@ -15,7 +16,11 @@ saved + logged to a Google Sheet. Optimized images are served on the fly via
 - **Styling:** Tailwind CSS v4 + shadcn/ui (no pre-built theme — components
   live in `src/components/ui/`).
 - **Data:** TanStack Query (SSR-integrated via `@tanstack/react-router-ssr-query`)
-  + Google Sheets as the database (OAuth token auth).
+  + Google Sheets for milk-storage records (OAuth token auth) + SQLite/Drizzle
+  for notification operational state.
+- **Database:** `better-sqlite3` + Drizzle ORM/Kit. SQLite uses WAL mode,
+  foreign keys, and a bounded busy timeout. Migrations run during server
+  startup before readiness is reported.
 - **AI:** OpenCode AI (`minimax-m3` vision model) via Vercel AI SDK.
 - **Images:** Sharp for upload-time resize/optimize; imgproxy for serve-time
   resize/crop with HMAC-signed URLs.
@@ -58,6 +63,11 @@ src/
 ├── lib/
 │   ├── ai.ts                      # Vision model: analyzeMilkPacket(base64) → {date,time,amount,packets,notes}
 │   ├── images.ts                  # saveUpload() + generateImgproxyUrl() (HMAC-signed)
+│   ├── db.ts                      # One server-only better-sqlite3 connection + Drizzle database
+│   ├── db-health.ts               # SELECT 1 database health check
+│   ├── db-migrations.ts           # Startup migration runner/readiness state
+│   ├── notification-schema.ts     # Drizzle schema for notification-state tables
+│   ├── notification-repository.ts # Notification device/subscription/outbox persistence
 │   ├── sheets.ts                  # Google Sheets CRUD (OAuth, read/write, MilkStorageBackend interface)
 │   ├── upload-fn.ts               # Server function: POST uploadMilk (FormData validator → processUpload)
 │   ├── entries-fn.ts              # Server function: GET getEntries (→ sheets.getAll)
@@ -66,10 +76,13 @@ src/
 ├── routes/
 │   ├── __root.tsx                 # Root layout: <html> shell, HeadContent, devtools, Footer
 │   ├── index.tsx                  # Home: prefetches entries, renders <OverviewPage>
-│   └── api/health.ts             # GET /api/health → { status: "ok", timestamp }
+│   └── api/health/               # live, ready, and startup Kubernetes health probes
 ├── router.tsx                     # createRouter + QueryClient setup + SSR integration
 ├── routeTree.gen.ts              # Auto-generated route tree (DO NOT EDIT — run `pnpm generate-routes`)
-└── styles.css                     # Tailwind entry point
+└── styles.css                    # Tailwind entry point
+
+drizzle/
+└── 0000_*.sql                    # Generated Drizzle SQLite migrations
 ```
 
 ## Upload pipeline (the core flow)
@@ -105,9 +118,9 @@ end-of-table insert) instead.
 
 ### Server functions (`createServerFn`)
 
-All server-side logic goes through TanStack Start server functions. They are
-the **only** bridge between client and server — there are no `/api/*` REST
-endpoints (except `/api/health` for k8s probes).
+All application server-side logic goes through TanStack Start server functions.
+The health routes under `/api/health/*` are the intentional HTTP exceptions
+used by Kubernetes probes.
 
 - **`uploadMilk`** (`upload-fn.ts`): `POST`, takes `FormData`, validates with a
   sync function, handler dynamic-imports `process-upload` (which uses Node
@@ -195,9 +208,12 @@ at build time and leak between requests.
 - `requireEnv(name)` in `sheets.ts` throws if a var is missing — use it for
   mandatory vars.
 - Optional vars use `process.env.X || "default"`.
+- `DATABASE_PATH` is the server-only SQLite path. Local development should use
+  a project-local file such as `./data/baby.sqlite`; production uses
+  `/data/baby.sqlite` on the persistent k3s hostPath.
 - See `.env.example` for the full list.
 
-### Google Sheets as database
+### Google Sheets storage
 
 The `MilkStorageBackend` interface (`sheets.ts`) abstracts the storage layer.
 The only implementation is `GoogleSheetsBackend`, but the interface exists so
@@ -219,6 +235,38 @@ encoded). The Docker Compose setup ensures this via the shared `.env` file.
 
 URL format: `{base}/{signature}/{processing}/plain/{source}`
 Example: `http://localhost:3000/img/AbCdEf.../rs:fit:400:0/plain/local:///images/originals/milk/2026-07/abc.jpg`
+
+### SQLite and Drizzle
+
+Google Sheets remains the canonical store for milk-storage records. SQLite is
+for durable notification operational state only; do not move milk data into
+SQLite as part of notification work.
+
+- `src/lib/db.ts` owns one server-only `better-sqlite3` connection and exposes
+  the Drizzle database. Do not import it from client code or open a connection
+  per request.
+- The database enables WAL mode, foreign keys, and a bounded busy timeout.
+- `drizzle/` contains generated migrations. Run
+  `pnpm exec drizzle-kit generate` after schema changes and review the generated
+  SQL before committing it.
+- The database plugin runs pending migrations during startup. Readiness is not
+  reported until the migration table exists and `SELECT 1` succeeds.
+- Never copy only `baby.sqlite` while the app is writing. Use SQLite's backup
+  API so WAL state is included.
+
+### Health endpoints
+
+The three health endpoints have different Kubernetes semantics:
+
+| Endpoint | Purpose | Database query |
+|---|---|---|
+| `/api/health/live` | Process is alive | No |
+| `/api/health/ready` | Pod can receive traffic | Yes |
+| `/api/health/startup` | Startup migrations completed | Yes + migration table |
+
+The production HelmRelease routes startup, readiness, and liveness probes to
+their matching endpoints. Do not collapse all probes back onto an always-200
+endpoint.
 
 ### Component colocation
 
@@ -290,6 +338,12 @@ Key files: `docker-compose.yml`, `docker-compose.dev.yml`, `nginx.conf`,
 6. **imgproxy key/salt must be hex-encoded 32-byte values** (64 hex chars
    each). Generate with `./scripts/generate-imgproxy-keys.sh` or
    `openssl rand -hex 32`.
+7. **SQLite is server-only notification state.** Keep `db.ts`, Drizzle schema,
+   migrations, and notification repositories out of client-importable modules.
+   Google Sheets remains the source of truth for milk records.
+8. **Migrations run at startup.** Any schema change must include a reviewed
+   generated migration under `drizzle/` and must preserve the startup health
+   contract.
 
 ## Common tasks
 
@@ -323,6 +377,10 @@ docker compose up -d
 # imgproxy health: http://localhost:3000/img/health
 ```
 
+For local SQLite development, set `DATABASE_PATH` to a project-local file
+before starting the app. Do not point local development at the production
+`/data/baby.sqlite` file.
+
 ### Deploy to k3s
 The deployment is GitOps-driven from the **homelab repo**, not this one.
 
@@ -334,6 +392,14 @@ The deployment is GitOps-driven from the **homelab repo**, not this one.
 2. Update the image tag in `homelab/apps/baby/release.yaml` (or let Flux's
    image-automation pick it up if you push a semver tag).
 3. Push to the homelab repo — Flux reconciles automatically.
+
+The private homelab repo also deploys Drizzle Gateway in the `baby` namespace
+for operational inspection of the live SQLite database. It uses the official
+`ghcr.io/drizzle-team/gateway` image, mounts the production database at
+`/data/baby.sqlite`, and is exposed through the same private Traefik ingress
+pattern at `https://baby-drizzle.pakatagoh.com`. Gateway access is protected by
+its own SOPS-managed `MASTERPASS`; do not add Gateway credentials to this app
+repository.
 
 ## Known gotchas
 
