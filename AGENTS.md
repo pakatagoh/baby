@@ -68,6 +68,8 @@ src/
 │   ├── db-migrations.ts           # Startup migration runner/readiness state
 │   ├── notification-schema.ts     # Drizzle schema for notification-state tables
 │   ├── notification-repository.ts # Notification device/subscription/outbox persistence
+│   ├── push-config.ts              # Server-only VAPID runtime configuration
+│   ├── push-fn.ts                  # Server function exposing only the public VAPID key
 │   ├── sheets.ts                  # Google Sheets CRUD (OAuth, read/write, MilkStorageBackend interface)
 │   ├── upload-fn.ts               # Server function: POST uploadMilk (FormData validator → processUpload)
 │   ├── entries-fn.ts              # Server function: GET getEntries (→ sheets.getAll)
@@ -211,6 +213,19 @@ at build time and leak between requests.
 - `DATABASE_PATH` is the server-only SQLite path. Local development should use
   a project-local file such as `./data/baby.sqlite`; production uses
   `/data/baby.sqlite` on the persistent k3s hostPath.
+- Web Push VAPID configuration is runtime-only: `VAPID_PUBLIC_KEY` is the public
+  application-server key used immediately before browser subscription,
+  `VAPID_SUBJECT` is VAPID contact/identity metadata, and
+  `VAPID_PRIVATE_KEY` authenticates server-side push sends.
+- Treat only `VAPID_PRIVATE_KEY` as secret material. It must remain server-only
+  and must never enter client modules, browser bundles, the service worker,
+  logs, Docker build arguments, or source control. The public key and subject
+  are plain runtime env values in production; the private key comes from the
+  encrypted Kubernetes Secret.
+- Never use `VITE_*` for VAPID configuration. Vite substitutes those values at
+  image-build time; Kubernetes runtime env values are required instead.
+- Keep `push-config.ts` server-only. `push-fn.ts` may return exactly the public
+  key to browser code, but must never return the private key or subject.
 - See `.env.example` for the full list.
 
 ### Google Sheets storage

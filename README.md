@@ -73,6 +73,29 @@ Fill in the required values in `.env`:
 | `IMGPROXY_KEY` | 64-char hex key for imgproxy URL signing |
 | `IMGPROXY_SALT` | 64-char hex salt for imgproxy URL signing |
 | `DATABASE_PATH` | SQLite path for notification state (default: `./data/baby.sqlite` locally) |
+| `VAPID_PUBLIC_KEY` | Public application-server key used by the browser when subscribing to Web Push |
+| `VAPID_PRIVATE_KEY` | Server-only private application-server key used to authenticate Web Push sends; never expose it to browser code |
+| `VAPID_SUBJECT` | VAPID contact/identity metadata, normally a `mailto:` or `https:` URL |
+
+### Web Push VAPID configuration
+
+The VAPID variables configure the Web Push application server:
+
+- `VAPID_PUBLIC_KEY` is intentionally public. The browser receives it immediately
+  before `pushManager.subscribe()` so the subscription is associated with this
+  application server.
+- `VAPID_PRIVATE_KEY` is secret server runtime configuration. It is used only by
+  server-side push sending code and must never reach client bundles, the service
+  worker, logs, Docker build arguments, or source control.
+- `VAPID_SUBJECT` identifies the application server in VAPID authentication
+  metadata. It is not a credential, but should still be configured consistently
+  with the key pair.
+
+In production, `VAPID_PUBLIC_KEY` and `VAPID_SUBJECT` are plain runtime
+environment variables, while `VAPID_PRIVATE_KEY` is supplied through the
+encrypted Kubernetes Secret. Do not use `VITE_*` variables for VAPID values:
+Vite substitutes those during the image build rather than reading pod runtime
+configuration.
 
 ### 3. Generate imgproxy keys
 
@@ -173,6 +196,8 @@ src/
 │   ├── images.ts            # Image save + imgproxy URL generation
 │   ├── notification-schema.ts     # Notification-state Drizzle schema
 │   ├── notification-repository.ts # Notification persistence operations
+│   ├── push-config.ts              # Server-only VAPID runtime configuration
+│   ├── push-fn.ts                  # Server function exposing only the public VAPID key
 │   ├── process-upload.ts    # Upload pipeline (serialised queue)
 │   ├── sheets.ts            # Google Sheets read/write
 │   ├── upload-fn.ts         # Server function: upload + analyse
