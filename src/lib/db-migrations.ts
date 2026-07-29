@@ -12,8 +12,15 @@ export function runDatabaseMigrations(
   startupComplete = true;
 }
 
-export function isDatabaseStartupComplete(): boolean {
-  return startupComplete;
+export function isDatabaseStartupComplete(handle: DatabaseHandle = getDatabase()): boolean {
+  try {
+    const migrationTable = handle.sqlite
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'")
+      .get() as { name?: string } | undefined;
+    return migrationTable?.name === "__drizzle_migrations";
+  } catch {
+    return false;
+  }
 }
 
 export function resetDatabaseStartupForTests(): void {

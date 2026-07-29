@@ -14,10 +14,10 @@ describe("database startup", () => {
     const handle = createDatabase(":memory:");
     handles.push(handle);
 
-    expect(isDatabaseStartupComplete()).toBe(false);
+    expect(isDatabaseStartupComplete(handle)).toBe(false);
     runDatabaseMigrations(handle, "drizzle");
 
-    expect(isDatabaseStartupComplete()).toBe(true);
+    expect(isDatabaseStartupComplete(handle)).toBe(true);
     expect(() => runDatabaseMigrations(handle, "drizzle")).not.toThrow();
   });
 });
