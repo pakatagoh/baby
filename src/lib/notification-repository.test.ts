@@ -131,7 +131,7 @@ describe("notification repository", () => {
       sourceEntryIds: ["entry-b", "entry-a"],
       actorUser: "isabel" as DeviceUser,
       recipientUser: "pakata" as DeviceUser,
-      payload: { title: "Baby Tracker", body: "A new frozen milk entry was added.", url: "/storage" },
+      payload: { title: "Frozen milk entry added", body: "2 packets of 120 ml were added, frozen on 29-Jul-26 at 10:30.", url: "/storage" },
       now: "2026-07-29T00:00:00.000Z",
     };
     const expectedKey = createHash("sha256")

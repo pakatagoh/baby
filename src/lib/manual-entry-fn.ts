@@ -46,7 +46,7 @@ export const createManualEntry = createServerFn({ method: "POST" })
       { currentSgtISO },
       { saveUpload, generateImgproxyUrl },
       { getDatabase },
-      { notifyMilkEntryCreated, DEFAULT_NOTIFICATION_PAYLOAD },
+      { notifyMilkEntryCreated },
     ] = await Promise.all([
       import("./sheets"),
       import("./activity-log"),
@@ -71,7 +71,11 @@ export const createManualEntry = createServerFn({ method: "POST" })
         await notifyMilkEntryCreated(getDatabase().db, {
           deviceId: data.deviceId,
           sourceEntryIds: ids,
-          payload: DEFAULT_NOTIFICATION_PAYLOAD,
+          details: {
+            amountMl: data.amount,
+            packetCount: ids.length,
+            frozenAt: data.frozenAt,
+          },
         });
       } catch (error) {
         console.error(

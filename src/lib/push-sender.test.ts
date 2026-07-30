@@ -10,8 +10,8 @@ const subscription = {
 };
 
 const payload = JSON.stringify({
-  title: "Baby Tracker",
-  body: "A new frozen milk entry was added.",
+  title: "Frozen milk entry added",
+  body: "2 packets of 120 ml were added, frozen on 29-Jul-26 at 10:30.",
   url: "/storage",
 });
 

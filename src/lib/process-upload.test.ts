@@ -25,11 +25,6 @@ vi.mock("./activity-log", () => ({ appendActivity: mocks.appendActivity }));
 vi.mock("./frozen-date", () => ({ currentSgtISO: mocks.currentSgtISO }));
 vi.mock("./notification-service", () => ({
   notifyMilkEntryCreated: mocks.notifyMilkEntryCreated,
-  DEFAULT_NOTIFICATION_PAYLOAD: {
-    title: "Baby Tracker",
-    body: "A new frozen milk entry was added.",
-    url: "/storage",
-  },
 }));
 vi.mock("./db", () => ({ getDatabase: mocks.getDatabase }));
 
@@ -72,7 +67,11 @@ describe("processBatchUpload", () => {
     });
     expect(mocks.notifyMilkEntryCreated).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ deviceId: "device-1", sourceEntryIds: ["packet-1", "packet-2"] }),
+      expect.objectContaining({
+        deviceId: "device-1",
+        sourceEntryIds: ["packet-1", "packet-2"],
+        details: { amountMl: 120, packetCount: 2, frozenAt: "2026-07-26T10:00:00+08:00" },
+      }),
     );
   });
 
@@ -84,7 +83,11 @@ describe("processBatchUpload", () => {
 
     expect(mocks.notifyMilkEntryCreated).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ deviceId: "device-1", sourceEntryIds: ["packet-1"] }),
+      expect.objectContaining({
+        deviceId: "device-1",
+        sourceEntryIds: ["packet-1"],
+        details: { amountMl: 120, packetCount: 1, frozenAt: "2026-07-26T10:00:00+08:00" },
+      }),
     );
   });
 
@@ -96,7 +99,11 @@ describe("processBatchUpload", () => {
     expect(result.id).toBe("single-packet");
     expect(mocks.notifyMilkEntryCreated).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ deviceId: "device-1", sourceEntryIds: ["single-packet"] }),
+      expect.objectContaining({
+        deviceId: "device-1",
+        sourceEntryIds: ["single-packet"],
+        details: { amountMl: 120, packetCount: 2, frozenAt: "2026-07-26T10:00:00+08:00" },
+      }),
     );
   });
 });

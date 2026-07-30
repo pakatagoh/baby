@@ -7,17 +7,21 @@ import { currentSgtISO } from "./frozen-date";
 
 const sgtISO = currentSgtISO;
 
-async function enqueueNewEntryNotification(deviceId: string | undefined, sourceEntryIds: string[]): Promise<void> {
+async function enqueueNewEntryNotification(
+  deviceId: string | undefined,
+  sourceEntryIds: string[],
+  details: { amountMl: number; packetCount: number; frozenAt: string },
+): Promise<void> {
   if (!deviceId || sourceEntryIds.length === 0) return;
   try {
-    const [{ getDatabase }, { notifyMilkEntryCreated, DEFAULT_NOTIFICATION_PAYLOAD }] = await Promise.all([
+    const [{ getDatabase }, { notifyMilkEntryCreated }] = await Promise.all([
       import("./db"),
       import("./notification-service"),
     ]);
     await notifyMilkEntryCreated(getDatabase().db, {
       deviceId,
       sourceEntryIds,
-      payload: DEFAULT_NOTIFICATION_PAYLOAD,
+      details,
     });
   } catch (error) {
     console.error(
@@ -79,7 +83,11 @@ export async function processUpload(file: File, deviceId?: string): Promise<Uplo
   });
   console.log("[process-upload] sheet append done, id:", id);
 
-  await enqueueNewEntryNotification(deviceId, [id]);
+  await enqueueNewEntryNotification(deviceId, [id], {
+    amountMl: result.amount_ml,
+    packetCount: result.packets,
+    frozenAt: result.frozenAt,
+  });
 
   // Log the event
   await appendActivity({
@@ -140,11 +148,19 @@ export async function processBatchUpload(
       });
     }
   } catch (error) {
-    await enqueueNewEntryNotification(deviceId, ids);
+    await enqueueNewEntryNotification(deviceId, ids, {
+      amountMl: result.amount_ml,
+      packetCount: ids.length,
+      frozenAt: result.frozenAt,
+    });
     throw error;
   }
   console.log("[process-upload] batch: sheet done, ids:", ids);
-  await enqueueNewEntryNotification(deviceId, ids);
+  await enqueueNewEntryNotification(deviceId, ids, {
+    amountMl: result.amount_ml,
+    packetCount: ids.length,
+    frozenAt: result.frozenAt,
+  });
 
   return { ids, previewUrl, srcSetThumb, result };
 }

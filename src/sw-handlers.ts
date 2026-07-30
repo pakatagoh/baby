@@ -1,5 +1,5 @@
-export const DEFAULT_NOTIFICATION_TITLE = "Baby Tracker";
-export const DEFAULT_NOTIFICATION_BODY = "A new frozen milk entry was added.";
+export const DEFAULT_NOTIFICATION_TITLE = "Frozen milk entry added";
+export const DEFAULT_NOTIFICATION_BODY = "A frozen milk entry was added.";
 export const DEFAULT_NOTIFICATION_URL = "/storage";
 export const NEW_ENTRY_NOTIFICATION_TAG = "baby-new-entry";
 

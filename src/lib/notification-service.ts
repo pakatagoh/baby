@@ -13,19 +13,35 @@ import {
 } from "./notification-repository";
 import { getConfiguredPushClient, sendPushNotification, type PushClient } from "./push-sender";
 import type { DeviceUser } from "./notification-schema";
+import { formatFrozenDate, formatFrozenTime } from "./frozen-date";
 
 export type NotificationPushClient = PushClient;
 
-export const DEFAULT_NOTIFICATION_PAYLOAD: NotificationPayload = {
-  title: "Baby Tracker",
-  body: "A new frozen milk entry was added.",
-  url: "/storage",
-};
+export const DEFAULT_NOTIFICATION_TITLE = "Frozen milk entry added";
+export const DEFAULT_NOTIFICATION_URL = "/storage";
+
+export interface NewEntryNotificationDetails {
+  amountMl: number;
+  packetCount: number;
+  frozenAt: string;
+}
+
+export function createNewEntryNotificationPayload(
+  details: NewEntryNotificationDetails,
+): NotificationPayload {
+  const packetLabel = details.packetCount === 1 ? "packet" : "packets";
+  const verb = details.packetCount === 1 ? "was" : "were";
+  return {
+    title: DEFAULT_NOTIFICATION_TITLE,
+    body: `${details.packetCount} ${packetLabel} of ${details.amountMl} ml ${verb} added, frozen on ${formatFrozenDate({ frozenAt: details.frozenAt })} at ${formatFrozenTime({ frozenAt: details.frozenAt })}.`,
+    url: DEFAULT_NOTIFICATION_URL,
+  };
+}
 
 export interface MilkEntryNotificationInput {
   deviceId: string;
   sourceEntryIds: string[];
-  payload: NotificationPayload;
+  details: NewEntryNotificationDetails;
   now?: string;
 }
 
@@ -70,7 +86,7 @@ export async function notifyMilkEntryCreated(
     sourceEntryIds: input.sourceEntryIds,
     actorUser,
     recipientUser,
-    payload: input.payload,
+    payload: createNewEntryNotificationPayload(input.details),
     now: input.now,
   });
   const sourceEntryIds = sourceIdsFromJson(outbox.sourceEntryIdsJson);

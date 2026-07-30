@@ -63,9 +63,9 @@ describe("Phase 5 service-worker push UI", () => {
       title: string,
       options: NotificationOptions,
     ) => {
-      expect(title).toBe("Baby Tracker");
+      expect(title).toBe("Frozen milk entry added");
       expect(options).toMatchObject({
-        body: "A new frozen milk entry was added.",
+        body: "A frozen milk entry was added.",
         tag: "baby-new-entry",
         data: { url: "/storage" },
       });

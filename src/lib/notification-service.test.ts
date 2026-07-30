@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDatabase } from "./db";
-import { notifyMilkEntryCreated, type NotificationPushClient } from "./notification-service";
+import {
+  createNewEntryNotificationPayload,
+  notifyMilkEntryCreated,
+  type NotificationPushClient,
+} from "./notification-service";
 import { upsertDeviceProfile, upsertPushSubscription } from "./notification-repository";
 
 const handles: Array<ReturnType<typeof createDatabase>> = [];
@@ -63,7 +67,15 @@ afterEach(() => {
   for (const handle of handles.splice(0)) handle.close();
 });
 
-const payload = { title: "Baby Tracker", body: "A new frozen milk entry was added.", url: "/storage" };
+const details = { amountMl: 120, packetCount: 2, frozenAt: "2026-07-29T10:30:00+08:00" };
+
+it("formats the customised notification title and body", () => {
+  expect(createNewEntryNotificationPayload(details)).toEqual({
+    title: "Frozen milk entry added",
+    body: "2 packets of 120 ml were added, frozen on 29-Jul-26 at 10:30.",
+    url: "/storage",
+  });
+});
 
 describe("notification service", () => {
   it("delivers to the other user's subscriptions and disables permanent failures", async () => {
@@ -82,7 +94,7 @@ describe("notification service", () => {
 
     const result = await notifyMilkEntryCreated(
       handle.db,
-      { deviceId: "isabel-device", sourceEntryIds: ["packet-2", "packet-1"], payload, now: "2026-07-29T00:01:00.000Z" },
+      { deviceId: "isabel-device", sourceEntryIds: ["packet-2", "packet-1"], details, now: "2026-07-29T00:01:00.000Z" },
       { pushClient: { sendNotification } },
     );
 
@@ -103,7 +115,7 @@ describe("notification service", () => {
     upsertPushSubscription(handle.db, { deviceProfileId: "isabel-device", endpoint: "https://push/isabel", p256dh: "p", auth: "a" });
     const pushClient = { sendNotification: vi.fn().mockResolvedValue({ statusCode: 201 }) };
 
-    const input = { deviceId: "pakata-device", sourceEntryIds: ["confirmed-2", "confirmed-1"], payload };
+    const input = { deviceId: "pakata-device", sourceEntryIds: ["confirmed-2", "confirmed-1"], details };
     const first = await notifyMilkEntryCreated(handle.db, input, { pushClient });
     const second = await notifyMilkEntryCreated(handle.db, input, { pushClient });
 
@@ -121,7 +133,7 @@ describe("notification service", () => {
     const result = await notifyMilkEntryCreated(handle.db, {
       deviceId: "isabel-device",
       sourceEntryIds: ["packet-1"],
-      payload,
+      details,
     }, { pushClient });
 
     expect(result.status).toBe("skipped");
