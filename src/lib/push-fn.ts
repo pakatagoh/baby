@@ -81,20 +81,11 @@ export const registerDeviceProfile = createServerFn({ method: "POST" })
 export const registerPushSubscription = createServerFn({ method: "POST" })
   .validator(parsePushSubscriptionInput)
   .handler(async ({ data }) => {
-    const [{ getDatabase }, repository] = await Promise.all([
+    const [{ getDatabase }, { registerPushSubscriptionForDatabase }] = await Promise.all([
       import("./db"),
       import("./notification-repository"),
     ]);
-    const db = getDatabase().db;
-    if (!repository.deviceProfileExists(db, data.deviceId)) {
-      throw new Error("Unknown device profile");
-    }
-    return repository.upsertPushSubscription(db, {
-      deviceProfileId: data.deviceId,
-      endpoint: data.endpoint,
-      p256dh: data.p256dh,
-      auth: data.auth,
-    });
+    return registerPushSubscriptionForDatabase(getDatabase().db, data);
   });
 
 export const disablePushSubscription = createServerFn({ method: "POST" })

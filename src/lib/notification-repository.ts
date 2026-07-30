@@ -68,6 +68,29 @@ export function deviceProfileExists(db: NotificationDb, id: string): boolean {
   );
 }
 
+export interface DevicePushSubscriptionInput {
+  deviceId: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+export function registerPushSubscriptionForDatabase(
+  db: NotificationDb,
+  input: DevicePushSubscriptionInput,
+): PushSubscriptionRecord {
+  if (!deviceProfileExists(db, input.deviceId)) {
+    throw new Error("Unknown device profile");
+  }
+
+  return upsertPushSubscription(db, {
+    deviceProfileId: input.deviceId,
+    endpoint: input.endpoint,
+    p256dh: input.p256dh,
+    auth: input.auth,
+  });
+}
+
 export function upsertPushSubscription(
   db: NotificationDb,
   input: PushSubscriptionInput,

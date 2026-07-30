@@ -6,6 +6,7 @@ import {
   disablePushSubscription,
   disablePushSubscriptionsForDevice,
   getActiveSubscriptionsForUser,
+  registerPushSubscriptionForDatabase,
   upsertDeviceProfile,
   upsertPushSubscription,
 } from "./notification-repository";
@@ -85,6 +86,43 @@ describe("notification repository", () => {
     expect(getActiveSubscriptionsForUser(handle.db, "pakata")).toEqual([
       expect.objectContaining({ endpoint: "https://push.example/2" }),
     ]);
+  });
+
+  it("registers a subscription for a known device", () => {
+    const handle = setupDatabase();
+    upsertDeviceProfile(handle.db, { id: "device-1", user: "pakata", now: "2026-07-29T00:00:00.000Z" });
+
+    const subscription = registerPushSubscriptionForDatabase(handle.db, {
+      deviceId: "device-1",
+      endpoint: "https://push.example/1",
+      p256dh: "p256dh-1",
+      auth: "auth-1",
+    });
+
+    expect(subscription).toEqual(
+      expect.objectContaining({
+        deviceProfileId: "device-1",
+        endpoint: "https://push.example/1",
+        p256dh: "p256dh-1",
+        auth: "auth-1",
+      }),
+    );
+    expect(handle.sqlite.prepare("SELECT COUNT(*) AS count FROM push_subscriptions").get()).toEqual({ count: 1 });
+  });
+
+  it("rejects an unknown device without creating a subscription", () => {
+    const handle = setupDatabase();
+
+    expect(() =>
+      registerPushSubscriptionForDatabase(handle.db, {
+        deviceId: "unknown-device",
+        endpoint: "https://push.example/1",
+        p256dh: "p256dh-1",
+        auth: "auth-1",
+      }),
+    ).toThrow("Unknown device profile");
+
+    expect(handle.sqlite.prepare("SELECT COUNT(*) AS count FROM push_subscriptions").get()).toEqual({ count: 0 });
   });
 
   it("creates one deterministic outbox row for a sorted batch and deduplicates repeats", () => {
