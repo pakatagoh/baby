@@ -47,7 +47,12 @@ assert.match(
 );
 assert.match(worker, /assets\/[^"']+\.css/, "sw.js must precache a CSS asset");
 assert.match(worker, /assets\/[^"']+\.js/, "sw.js must precache a JavaScript asset");
-assert.doesNotMatch(worker, /addEventListener\(["']push["']/, "Phase 1 worker must not have a push handler");
+assert.match(worker, /addEventListener\([`"']push[`"']/, "the custom worker must have a push handler");
+assert.match(
+  worker,
+  /addEventListener\([`"']notificationclick[`"']/,
+  "the custom worker must have a notification-click handler",
+);
 
 const precacheUrls = Array.from(worker.matchAll(/\{"revision":(?:null|"[^"]*"),"url":"([^"]+)"\}/g)).map(
   ([, url]) => url,
