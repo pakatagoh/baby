@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getStoredDeviceProfile } from "@/lib/device-profile";
 import { Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 
 type ModalState =
@@ -73,6 +74,8 @@ export function UploadModal({ file, onClose }: UploadModalProps) {
     const form = new FormData();
     form.append("image", file);
     form.append("packetCount", String(count));
+    const deviceProfile = getStoredDeviceProfile();
+    if (deviceProfile) form.append("deviceId", deviceProfile.deviceId);
 
     try {
       await uploadPacketsFn({ data: form });

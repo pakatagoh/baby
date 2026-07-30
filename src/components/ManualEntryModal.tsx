@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { createManualEntry } from "@/lib/manual-entry-fn";
+import { getStoredDeviceProfile } from "@/lib/device-profile";
 import {
   currentSgtISO,
   frozenDateInput,
@@ -67,6 +68,8 @@ export function ManualEntryModal({ onClose }: ManualEntryModalProps) {
       form.set("amount", String(parsedAmount));
       form.set("packetCount", String(parsedCount));
       form.set("notes", notes.trim());
+      const deviceProfile = getStoredDeviceProfile();
+      if (deviceProfile) form.set("deviceId", deviceProfile.deviceId);
       if (photo) form.set("image", photo);
 
       await createEntry({ data: form });

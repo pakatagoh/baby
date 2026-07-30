@@ -7,6 +7,26 @@ import { currentSgtISO } from "./frozen-date";
 
 const sgtISO = currentSgtISO;
 
+async function enqueueNewEntryNotification(deviceId: string | undefined, sourceEntryIds: string[]): Promise<void> {
+  if (!deviceId || sourceEntryIds.length === 0) return;
+  try {
+    const [{ getDatabase }, { notifyMilkEntryCreated, DEFAULT_NOTIFICATION_PAYLOAD }] = await Promise.all([
+      import("./db"),
+      import("./notification-service"),
+    ]);
+    await notifyMilkEntryCreated(getDatabase().db, {
+      deviceId,
+      sourceEntryIds,
+      payload: DEFAULT_NOTIFICATION_PAYLOAD,
+    });
+  } catch (error) {
+    console.error(
+      "[notifications] enqueue failed:",
+      error instanceof Error ? error.message : "unknown error",
+    );
+  }
+}
+
 export interface UploadResult {
   id: string;
   previewUrl: string;
@@ -23,7 +43,7 @@ export interface BatchUploadResult {
 
 /** Save, analyze, and append a single photographed milk packet. */
 
-export async function processUpload(file: File): Promise<UploadResult> {
+export async function processUpload(file: File, deviceId?: string): Promise<UploadResult> {
   console.log("[process-upload] starting saveUpload");
   const { storedPath, optimizedBase64 } = await saveUpload(file, "milk");
   console.log(
@@ -59,6 +79,8 @@ export async function processUpload(file: File): Promise<UploadResult> {
   });
   console.log("[process-upload] sheet append done, id:", id);
 
+  await enqueueNewEntryNotification(deviceId, [id]);
+
   // Log the event
   await appendActivity({
     eventType: "milk_frozen",
@@ -75,6 +97,7 @@ export async function processUpload(file: File): Promise<UploadResult> {
 export async function processBatchUpload(
   file: File,
   packetCount: number,
+  deviceId?: string,
 ): Promise<BatchUploadResult> {
   console.log("[process-upload] batch: starting saveUpload");
   const { storedPath, optimizedBase64 } = await saveUpload(file, "milk");
@@ -94,28 +117,34 @@ export async function processBatchUpload(
   );
   const ids: string[] = [];
   const now = sgtISO();
-  for (let i = 0; i < packetCount; i++) {
-    const { id } = await appendToSheet({
-      id: "",
-      frozenAt: result.frozenAt,
-      amount: result.amount_ml,
-      packets: 1, // always 1 per row after unrolling
-      totalFrozen: 0,
-      totalUsed: 0,
-      notes: "",
-      imageUrl: previewUrl,
-      createdAt: now,
-      updatedAt: "",
-      used: false,
-      usedAt: "",
-    });
-    ids.push(id);
-    await appendActivity({
-      eventType: "milk_frozen",
-      frozenMilkEntryId: id,
-    });
+  try {
+    for (let i = 0; i < packetCount; i++) {
+      const { id } = await appendToSheet({
+        id: "",
+        frozenAt: result.frozenAt,
+        amount: result.amount_ml,
+        packets: 1, // always 1 per row after unrolling
+        totalFrozen: 0,
+        totalUsed: 0,
+        notes: "",
+        imageUrl: previewUrl,
+        createdAt: now,
+        updatedAt: "",
+        used: false,
+        usedAt: "",
+      });
+      ids.push(id);
+      await appendActivity({
+        eventType: "milk_frozen",
+        frozenMilkEntryId: id,
+      });
+    }
+  } catch (error) {
+    await enqueueNewEntryNotification(deviceId, ids);
+    throw error;
   }
   console.log("[process-upload] batch: sheet done, ids:", ids);
+  await enqueueNewEntryNotification(deviceId, ids);
 
   return { ids, previewUrl, srcSetThumb, result };
 }

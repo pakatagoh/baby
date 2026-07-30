@@ -15,10 +15,11 @@ export const uploadPackets = createServerFn({ method: "POST" })
     if (!Number.isInteger(packetCount) || packetCount < 1 || packetCount > 50)
       throw new Error("Packet count must be between 1 and 50");
 
-    return { file, packetCount };
+    const deviceId = String(form.get("deviceId") ?? "").trim();
+    return { file, packetCount, deviceId: deviceId || undefined };
   })
-  .handler(async ({ data: { file, packetCount } }) => {
+  .handler(async ({ data: { file, packetCount, deviceId } }) => {
     // Dynamic import — this module uses Node builtins and runs only on the server.
     const { processBatchUpload } = await import("./process-upload");
-    return processBatchUpload(file, packetCount);
+    return processBatchUpload(file, packetCount, deviceId);
   });

@@ -14,13 +14,14 @@ export const uploadMilk = createServerFn({ method: "POST" })
       throw new Error("File must be an image");
     if (file.size > 20 * 1024 * 1024)
       throw new Error("File too large (max 20MB)");
-    return file;
+    const deviceId = String(form.get("deviceId") ?? "").trim();
+    return { file, deviceId: deviceId || undefined };
   })
-  .handler(async ({ data: file }) => {
+  .handler(async ({ data: { file, deviceId } }) => {
     console.log("[server] handler starting processUpload");
     // Dynamic import — this module uses Node builtins and runs only on the server.
     const { processUpload } = await import("./process-upload");
-    const result = await processUpload(file);
+    const result = await processUpload(file, deviceId);
     console.log("[server] handler done, result:", result);
     return result;
   });

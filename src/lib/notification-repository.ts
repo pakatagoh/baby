@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import {
   deviceProfiles,
+  notificationDeliveries,
   notificationOutbox,
   notificationSchema,
   pushSubscriptions,
@@ -39,6 +40,12 @@ export interface NotificationPayload {
   url: string;
 }
 
+export type NotificationDeliveryStatus =
+  | "pending"
+  | "sent"
+  | "permanent_failure"
+  | "retryable_failure";
+
 export interface MilkEntryOutboxInput {
   sourceEntryIds: string[];
   actorUser: DeviceUser;
@@ -73,6 +80,14 @@ export interface DevicePushSubscriptionInput {
   endpoint: string;
   p256dh: string;
   auth: string;
+}
+
+export function getDeviceProfileUser(db: NotificationDb, id: string): DeviceUser | null {
+  return db
+    .select({ user: deviceProfiles.user })
+    .from(deviceProfiles)
+    .where(eq(deviceProfiles.id, id))
+    .get()?.user ?? null;
 }
 
 export function registerPushSubscriptionForDatabase(
@@ -226,4 +241,110 @@ export function createMilkEntryOutbox(
   };
   db.insert(notificationOutbox).values(row).run();
   return row;
+}
+
+export function markPushSubscriptionSuccess(
+  db: NotificationDb,
+  id: string,
+  now = new Date().toISOString(),
+): void {
+  db.update(pushSubscriptions)
+    .set({ lastSuccessAt: now, updatedAt: now })
+    .where(eq(pushSubscriptions.id, id))
+    .run();
+}
+
+export function getNotificationOutboxByIdempotencyKey(
+  db: NotificationDb,
+  idempotencyKey: string,
+) {
+  return db
+    .select()
+    .from(notificationOutbox)
+    .where(eq(notificationOutbox.idempotencyKey, idempotencyKey))
+    .get();
+}
+
+export function ensureNotificationDeliveries(
+  db: NotificationDb,
+  outboxId: string,
+  subscriptions: PushSubscriptionRecord[],
+  now = new Date().toISOString(),
+): void {
+  if (subscriptions.length === 0) return;
+  db.insert(notificationDeliveries)
+    .values(
+      subscriptions.map((subscription) => ({
+        id: randomUUID(),
+        outboxId,
+        subscriptionId: subscription.id,
+        status: "pending",
+        providerStatusCode: null,
+        providerResponseCategory: null,
+        attemptedAt: now,
+        completedAt: null,
+      })),
+    )
+    .onConflictDoNothing()
+    .run();
+}
+
+export function getNotificationDeliveryStatuses(
+  db: NotificationDb,
+  outboxId: string,
+): Array<{ subscriptionId: string; status: string }> {
+  return db
+    .select({ subscriptionId: notificationDeliveries.subscriptionId, status: notificationDeliveries.status })
+    .from(notificationDeliveries)
+    .where(eq(notificationDeliveries.outboxId, outboxId))
+    .all();
+}
+
+export function updateNotificationDelivery(
+  db: NotificationDb,
+  outboxId: string,
+  subscriptionId: string,
+  status: NotificationDeliveryStatus,
+  providerStatusCode: number | undefined,
+  providerResponseCategory: string,
+  now = new Date().toISOString(),
+): void {
+  db.update(notificationDeliveries)
+    .set({
+      status,
+      providerStatusCode: providerStatusCode ?? null,
+      providerResponseCategory,
+      attemptedAt: now,
+      completedAt: status === "pending" ? null : now,
+    })
+    .where(
+      and(
+        eq(notificationDeliveries.outboxId, outboxId),
+        eq(notificationDeliveries.subscriptionId, subscriptionId),
+      ),
+    )
+    .run();
+}
+
+export function updateNotificationOutbox(
+  db: NotificationDb,
+  id: string,
+  values: {
+    status: "pending" | "sending" | "sent" | "failed" | "skipped";
+    attempts: number;
+    lastError?: string | null;
+    sentAt?: string | null;
+    now?: string;
+  },
+): void {
+  db.update(notificationOutbox)
+    .set({
+      status: values.status,
+      attempts: values.attempts,
+      lastError: values.lastError ?? null,
+      sentAt: values.sentAt ?? null,
+      updatedAt: values.now ?? new Date().toISOString(),
+    })
+    .where(eq(notificationOutbox.id, id))
+    .run();
 }
