@@ -19,6 +19,7 @@ import {
   toFrozenAt,
 } from "@/lib/frozen-date";
 import type { MilkSheetEntry } from "@/lib/sheets";
+import { getStoredDeviceProfile } from "@/lib/device-profile";
 import { X } from "lucide-react";
 
 interface EntryDetailModalProps {
@@ -66,6 +67,8 @@ export function EntryDetailModal({ entry, open, onClose }: EntryDetailModalProps
           usedAt: used ? (entry.usedAt || new Date().toISOString()) : "",
           totalUsed: used ? entry.packets : 0,
           entryId: entry.id,
+          deviceId: getStoredDeviceProfile()?.deviceId,
+          notifyUsed: true,
         },
       });
       void queryClient.invalidateQueries({ queryKey: ["entries"] });

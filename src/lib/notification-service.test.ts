@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDatabase } from "./db";
 import {
   createNewEntryNotificationPayload,
+  createEntriesUsedNotificationPayload,
   notifyMilkEntryCreated,
   type NotificationPushClient,
 } from "./notification-service";
@@ -75,6 +76,22 @@ it("formats the customised notification title and body", () => {
     body: "2 packets of 120 ml were added, frozen on 29-Jul-26 at 10:30.",
     url: "/storage",
   });
+});
+
+it("formats single and batch used-entry notifications", () => {
+  expect(createEntriesUsedNotificationPayload({
+    packetCount: 1,
+    amountMl: 120,
+    usedAt: "2026-07-29T10:30:00+08:00",
+  })).toEqual({
+    title: "Frozen milk marked as used",
+    body: "1 packet of 120 ml was used at 10:30.",
+    url: "/storage",
+  });
+  expect(createEntriesUsedNotificationPayload({
+    packetCount: 2,
+    usedAt: "2026-07-29T10:30:00+08:00",
+  }).body).toBe("2 packets marked as used at 10:30.");
 });
 
 describe("notification service", () => {

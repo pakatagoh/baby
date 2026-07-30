@@ -45,6 +45,15 @@ export interface MilkEntryNotificationInput {
   now?: string;
 }
 
+interface NotificationEventInput {
+  deviceId: string;
+  sourceEntryIds: string[];
+  payload: NotificationPayload;
+  eventType: string;
+  idempotencyNamespace: string;
+  now?: string;
+}
+
 export interface NotificationServiceDependencies {
   pushClient?: PushClient;
 }
@@ -70,9 +79,9 @@ function sourceIdsFromJson(value: string): string[] {
   return parsed;
 }
 
-export async function notifyMilkEntryCreated(
+async function notifyEntryEvent(
   db: NotificationDb,
-  input: MilkEntryNotificationInput,
+  input: NotificationEventInput,
   dependencies: NotificationServiceDependencies = {},
 ): Promise<NotificationServiceResult> {
   if (input.sourceEntryIds.length === 0) {
@@ -86,7 +95,9 @@ export async function notifyMilkEntryCreated(
     sourceEntryIds: input.sourceEntryIds,
     actorUser,
     recipientUser,
-    payload: createNewEntryNotificationPayload(input.details),
+    payload: input.payload,
+    eventType: input.eventType,
+    idempotencyNamespace: input.idempotencyNamespace,
     now: input.now,
   });
   const sourceEntryIds = sourceIdsFromJson(outbox.sourceEntryIdsJson);
@@ -174,4 +185,77 @@ export async function notifyMilkEntryCreated(
     permanentlyInvalid,
     retryableFailures,
   };
+}
+
+export async function notifyMilkEntryCreated(
+  db: NotificationDb,
+  input: MilkEntryNotificationInput,
+  dependencies: NotificationServiceDependencies = {},
+): Promise<NotificationServiceResult> {
+  return notifyEntryEvent(
+    db,
+    {
+      deviceId: input.deviceId,
+      sourceEntryIds: input.sourceEntryIds,
+      payload: createNewEntryNotificationPayload(input.details),
+      eventType: "milk_entry_created",
+      idempotencyNamespace: "milk-entry-created:v1",
+      now: input.now,
+    },
+    dependencies,
+  );
+}
+
+export interface EntriesUsedNotificationDetails {
+  packetCount: number;
+  usedAt: string;
+  amountMl?: number;
+}
+
+function formatUsedTime(usedAt: string): string {
+  const date = new Date(usedAt);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Singapore",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+}
+
+export function createEntriesUsedNotificationPayload(
+  details: EntriesUsedNotificationDetails,
+): NotificationPayload {
+  const body = details.packetCount === 1
+    ? `1 packet of ${details.amountMl ?? 0} ml was used at ${formatUsedTime(details.usedAt)}.`
+    : `${details.packetCount} packets marked as used at ${formatUsedTime(details.usedAt)}.`;
+  return {
+    title: "Frozen milk marked as used",
+    body,
+    url: "/storage",
+  };
+}
+
+export async function notifyEntriesUsed(
+  db: NotificationDb,
+  input: {
+    deviceId: string;
+    sourceEntryIds: string[];
+    details: EntriesUsedNotificationDetails;
+    now?: string;
+  },
+  dependencies: NotificationServiceDependencies = {},
+): Promise<NotificationServiceResult> {
+  return notifyEntryEvent(
+    db,
+    {
+      deviceId: input.deviceId,
+      sourceEntryIds: input.sourceEntryIds,
+      payload: createEntriesUsedNotificationPayload(input.details),
+      eventType: "entries_used",
+      idempotencyNamespace: `entries-used:v1:${input.details.usedAt}`,
+      now: input.now,
+    },
+    dependencies,
+  );
 }

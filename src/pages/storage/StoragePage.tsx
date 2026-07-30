@@ -2,7 +2,8 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getEntries } from "@/lib/entries-fn";
-import { updateEntry } from "@/lib/update-entry-fn";
+import { notifyUsedEntries, updateEntry } from "@/lib/update-entry-fn";
+import { getStoredDeviceProfile } from "@/lib/device-profile";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import { TotalFrozenCard } from "@/pages/overview/TotalFrozenCard";
 import { SlidersHorizontal } from "lucide-react";
@@ -32,6 +33,7 @@ const defaultFilter: FilterState = {
 export function StoragePage() {
   const queryClient = useQueryClient();
   const updateFn = useServerFn(updateEntry);
+  const notifyFn = useServerFn(notifyUsedEntries);
 
   const { data: entries = [], error: loadError } = useQuery({
     queryKey: ["entries"],
@@ -104,12 +106,35 @@ export function StoragePage() {
     if (selectedIds.size === 0) return;
     setBusy(true);
     try {
-      const targets = entries.filter((e) => selectedIds.has(e.id) && e.rowIndex);
-      await Promise.all(
+      const targets = entries.filter((e) => selectedIds.has(e.id) && !e.used && e.rowIndex);
+      const usedAt = new Date().toISOString();
+      const results = await Promise.allSettled(
         targets.map((e) =>
-          updateFn({ data: { rowIndex: e.rowIndex!, used: true, totalUsed: e.packets, usedAt: new Date().toISOString(), entryId: e.id } }),
+          updateFn({ data: { rowIndex: e.rowIndex!, used: true, totalUsed: e.packets, usedAt, entryId: e.id, notifyUsed: false } }),
         ),
       );
+      const confirmedIds = targets.flatMap((entry, index) =>
+        results[index]?.status === "fulfilled" ? [entry.id] : [],
+      );
+      const deviceProfile = getStoredDeviceProfile();
+      if (deviceProfile && confirmedIds.length > 0) {
+        try {
+          await notifyFn({
+            data: {
+              deviceId: deviceProfile.deviceId,
+              sourceEntryIds: confirmedIds,
+              packetCount: confirmedIds.length,
+              usedAt,
+            },
+          });
+        } catch (error) {
+          console.error("[notifications] used-entry enqueue failed:", error);
+        }
+      }
+      const failed = results.find((result) => result.status === "rejected");
+      if (failed?.status === "rejected") {
+        throw failed.reason;
+      }
       void queryClient.invalidateQueries({ queryKey: ["entries"] });
       setSelectedIds(new Set());
     } finally {

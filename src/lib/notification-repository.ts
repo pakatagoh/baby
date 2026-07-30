@@ -51,6 +51,8 @@ export interface MilkEntryOutboxInput {
   actorUser: DeviceUser;
   recipientUser: DeviceUser;
   payload: NotificationPayload;
+  eventType?: string;
+  idempotencyNamespace?: string;
   now?: string;
 }
 
@@ -212,8 +214,10 @@ export function createMilkEntryOutbox(
 
   const sourceEntryIds = [...new Set(input.sourceEntryIds)].sort();
   const canonical = sourceEntryIds.join(",");
+  const eventType = input.eventType ?? "milk_entry_created";
+  const idempotencyNamespace = input.idempotencyNamespace ?? "milk-entry-created:v1";
   const idempotencyKey = createHash("sha256")
-    .update(`milk-entry-created:v1:${canonical}:${input.recipientUser}`)
+    .update(`${idempotencyNamespace}:${canonical}:${input.recipientUser}`)
     .digest("hex");
   const existing = db
     .select()
@@ -225,7 +229,7 @@ export function createMilkEntryOutbox(
   const now = timestamp(input.now);
   const row = {
     id: randomUUID(),
-    eventType: "milk_entry_created",
+    eventType,
     sourceEntryIdsJson: JSON.stringify(sourceEntryIds),
     actorUser: input.actorUser,
     recipientUser: input.recipientUser,

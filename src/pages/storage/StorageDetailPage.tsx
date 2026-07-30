@@ -16,6 +16,7 @@ import {
   toFrozenAt,
 } from "@/lib/frozen-date";
 import type { MilkSheetEntry } from "@/lib/sheets";
+import { getStoredDeviceProfile } from "@/lib/device-profile";
 import { ArrowLeft } from "lucide-react";
 
 /** Props initialised from SSR — no useEffect flash. */
@@ -46,6 +47,8 @@ export function StorageDetailPage({ entry }: { entry: MilkSheetEntry }) {
           usedAt: used ? (entry.usedAt || new Date().toISOString()) : "",
           totalUsed: used ? entry.packets : 0,
           entryId: entry.id,
+          deviceId: getStoredDeviceProfile()?.deviceId,
+          notifyUsed: true,
         },
       });
       void queryClient.invalidateQueries({ queryKey: ["entries"] });
