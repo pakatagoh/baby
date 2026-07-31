@@ -6,7 +6,7 @@ import {
   Keyboard,
   Package,
   Plus,
-  BarChart3,
+  BookOpen,
   Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { id: "overview", label: "Overview", to: "/", icon: <Home className="size-5" /> },
   { id: "storage", label: "Storage", to: "/storage", icon: <Package className="size-5" /> },
   { id: "add", label: "Add", to: "", icon: <Plus className="size-6" />, cta: true },
-  { id: "stats", label: "Stats", to: "/stats", icon: <BarChart3 className="size-5" /> },
+  { id: "guides", label: "Guides", to: "/guides", icon: <BookOpen className="size-5" /> },
   { id: "settings", label: "Settings", to: "/settings", icon: <Settings className="size-5" /> },
 ];
 
