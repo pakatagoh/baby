@@ -34,7 +34,7 @@ export function DailyIntakeChart({ currentRange }: Props) {
       <ResponsiveContainer width="100%" height={200}>
         <BarChart
           data={data}
-          margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
+          margin={{ top: 24, right: 8, left: -12, bottom: 0 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
