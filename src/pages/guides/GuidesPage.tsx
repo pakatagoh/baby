@@ -2,11 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getFeedingGuide } from "@/lib/feeding-guide-fn";
 import { FeedingOverview } from "@/pages/guides/FeedingOverview";
 import { DailyIntakeChart } from "@/pages/guides/DailyIntakeChart";
-import { PacedFeeding } from "@/pages/guides/PacedFeeding";
-import { DirectNursing } from "@/pages/guides/DirectNursing";
-import { KeyRules } from "@/pages/guides/KeyRules";
-import { HungerCues } from "@/pages/guides/HungerCues";
-import { AdequacyChecks } from "@/pages/guides/AdequacyChecks";
 
 export function GuidesPage() {
   const { data: guide } = useQuery({
@@ -46,12 +41,6 @@ export function GuidesPage() {
               <DailyIntakeChart currentRange={guide.current} />
             </>
           )}
-
-          <PacedFeeding />
-          <DirectNursing />
-          <KeyRules />
-          <HungerCues />
-          <AdequacyChecks />
 
           {/* Source attribution */}
           <p className="text-center text-xs text-muted-foreground">
