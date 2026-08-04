@@ -15,36 +15,57 @@ function computeAge(dob: string): string {
   if (Number.isNaN(birth.getTime())) return "";
 
   const now = new Date();
-  const diffMs = now.getTime() - birth.getTime();
-  const totalDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+  if (now < birth) return "";
 
-  if (totalDays < 0) return "";
+  // Calendar month arithmetic (handles varying month lengths correctly)
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+  let days = now.getDate() - birth.getDate();
 
-  // Under 4 weeks: show in weeks
-  if (totalDays < 28) {
+  if (days < 0) {
+    months--;
+    // Borrow days from the previous month
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  const totalMonths = years * 12 + months;
+
+  // Under 1 month: show in weeks + days (7-day intervals from birthday)
+  if (totalMonths === 0) {
+    const totalDays = Math.floor((now.getTime() - birth.getTime()) / (24 * 60 * 60 * 1000));
     const weeks = Math.floor(totalDays / 7);
-    if (weeks === 0 && totalDays === 0) return "Today";
-    if (weeks === 0) return `${totalDays} day${totalDays > 1 ? "s" : ""}`;
     const remainingDays = totalDays - weeks * 7;
+
+    if (totalDays === 0) return "Today";
+    if (weeks === 0) return `${totalDays} day${totalDays > 1 ? "s" : ""}`;
     if (remainingDays === 0) return `${weeks} week${weeks > 1 ? "s" : ""}`;
     return `${weeks} week${weeks > 1 ? "s" : ""}, ${remainingDays} day${remainingDays > 1 ? "s" : ""}`;
   }
 
-  // Under 12 months: show in months + weeks
-  const totalWeeks = Math.floor(totalDays / 7);
-  const months = Math.floor(totalDays / 30.4375);
-  const remainingWeeks = Math.floor((totalWeeks - months * 4.345) % 4.345);
+  // Under 1 year: show in months + weeks + days
+  // Month boundary is birthday + totalMonths (same day-of-month in a later month)
+  if (totalMonths < 12) {
+    const monthBoundary = new Date(birth);
+    monthBoundary.setMonth(birth.getMonth() + totalMonths);
+    const daysSinceBoundary = Math.floor((now.getTime() - monthBoundary.getTime()) / (24 * 60 * 60 * 1000));
+    const boundaryWeeks = Math.floor(daysSinceBoundary / 7);
+    const boundaryDays = daysSinceBoundary - boundaryWeeks * 7;
 
-  if (months < 12) {
-    if (remainingWeeks <= 0) return `${months} month${months > 1 ? "s" : ""}`;
-    return `${months} month${months > 1 ? "s" : ""}, ${remainingWeeks} week${remainingWeeks > 1 ? "s" : ""}`;
+    if (boundaryWeeks === 0 && boundaryDays === 0) return `${totalMonths} month${totalMonths > 1 ? "s" : ""}`;
+    if (boundaryWeeks === 0) return `${totalMonths} month${totalMonths > 1 ? "s" : ""}, ${boundaryDays} day${boundaryDays > 1 ? "s" : ""}`;
+    if (boundaryDays === 0) return `${totalMonths} month${totalMonths > 1 ? "s" : ""}, ${boundaryWeeks} week${boundaryWeeks > 1 ? "s" : ""}`;
+    return `${totalMonths} month${totalMonths > 1 ? "s" : ""}, ${boundaryWeeks} week${boundaryWeeks > 1 ? "s" : ""}, ${boundaryDays} day${boundaryDays > 1 ? "s" : ""}`;
   }
 
   // 1+ year: show in years + months
-  const years = Math.floor(months / 12);
-  const remainingMonths = months % 12;
-  if (remainingMonths === 0) return `${years} year${years > 1 ? "s" : ""}`;
-  return `${years} year${years > 1 ? "s" : ""}, ${remainingMonths} month${remainingMonths > 1 ? "s" : ""}`;
+  if (months === 0) return `${years} year${years > 1 ? "s" : ""}`;
+  return `${years} year${years > 1 ? "s" : ""}, ${months} month${months > 1 ? "s" : ""}`;
 }
 
 export function BabyProfileHero({ profile, imageUrl }: BabyProfileHeroProps) {
