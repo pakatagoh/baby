@@ -1,5 +1,5 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { generateObject } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 
 const opencode = createAnthropic({
@@ -10,56 +10,45 @@ const opencode = createAnthropic({
 const visionModel = opencode("minimax-m3");
 
 const MilkPacketSchema = z.object({
-  frozenAt: z
-    .string()
-    .describe(
-      "ISO 8601 datetime of the freeze time in SGT (+08:00), e.g. 2026-07-16T10:30:00+08:00",
-    ),
-  amount_ml: z
-    .number()
-    .int()
-    .min(10)
-    .max(500)
-    .describe(
-      "Amount per packet in ml, typically 80, 90, or 100",
-    ),
-  packets: z
-    .number()
-    .int()
-    .min(1)
-    .max(10)
-    .default(1)
-    .describe(
-      "Number of packets photographed. Default 1 unless multiple visible.",
-    ),
+  frozenAt: z.string(),
+  amount_ml: z.number().int().min(10).max(500),
+  packets: z.number().int().min(1).max(10).default(1),
 });
 
 export type MilkPacketResult = z.infer<typeof MilkPacketSchema>;
 
+/**
+ * Extract milk packet label info from a photo.
+ *
+ * Uses generateText with prompt-instructed JSON output instead of generateObject
+ * because minimax-m3 via OpenCode's Anthropic-compatible API does not support
+ * tool calling — the model sees the tools but responds with text about them
+ * rather than invoking them, causing generateObject to fail with "No object
+ * generated: the model did not return a response."
+ */
 export async function analyzeMilkPacket(
   imageBase64: string,
   mimeType: string,
 ): Promise<MilkPacketResult> {
-  const { object } = await generateObject({
+  const { text } = await generateText({
     model: visionModel,
-    schema: MilkPacketSchema,
+    system:
+      "You are a label reader for frozen breast milk storage packets. " +
+      "Always respond with ONLY valid JSON, no other text. " +
+      "JSON schema: {\"frozenAt\": \"ISO 8601 datetime in SGT (+08:00)\", \"amount_ml\": number, \"packets\": number}. " +
+      "If the label shows a date like \"15 Jul 2026\" and time like \"10:30 AM\", " +
+      "combine them into e.g. 2026-07-15T10:30:00+08:00. " +
+      "Convert formats like 15/7/26 or 3:00 PM to ISO. " +
+      "Amount values are typically 80, 90, 100, or 120 ml. " +
+      "If unsure about any field, make your best guess. " +
+      "Never leave fields empty or null.",
     messages: [
       {
         role: "user",
         content: [
           {
             type: "text",
-            text:
-              "This is a photo of a frozen breast milk storage packet. " +
-              "Extract the following information from the label:\n" +
-              "- The date and time the milk was frozen, as an ISO 8601 datetime in SGT (+08:00) timezone. " +
-              "Example: 2026-07-16T10:30:00+08:00. " +
-              "If the label shows a date like \"15 Jul 2026\" and time like \"10:30 AM\", combine them.\n" +
-              "- Amount in ml (typically 80, 90, or 100)\n" +
-              "- Number of packets in the photo (usually 1)\n\n" +
-              "If the label uses a different format (e.g. 15/7/26, 3:00 PM), convert to the ISO format. " +
-              "If you're unsure about any field, make your best guess. " +
-              "Never leave required fields empty.",
+            text: "Extract the label info as JSON.",
           },
           {
             type: "file",
@@ -70,7 +59,30 @@ export async function analyzeMilkPacket(
       },
     ],
     temperature: 0.1,
+    maxTokens: 200,
   });
 
-  return object;
+  // The model may wrap JSON in markdown code fences; strip them.
+  const jsonStr = text
+    .replace(/^```(?:json)?\s*\n?/i, "")
+    .replace(/\n?```\s*$/, "")
+    .trim();
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(jsonStr);
+  } catch {
+    throw new Error(
+      `Failed to parse AI response as JSON. Raw text: ${text.slice(0, 300)}`,
+    );
+  }
+
+  const parsed = MilkPacketSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error(
+      `AI response failed schema validation: ${parsed.error.message}. Raw text: ${text.slice(0, 300)}`,
+    );
+  }
+
+  return parsed.data;
 }
