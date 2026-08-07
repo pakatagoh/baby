@@ -102,6 +102,10 @@ export const createManualEntry = createServerFn({ method: "POST" })
           usedAt: "",
         });
         ids.push(id);
+        await appendActivity({
+          eventType: "milk_frozen",
+          frozenMilkEntryId: id,
+        });
       }
     } catch (error) {
       await notifyConfirmed();
@@ -109,10 +113,6 @@ export const createManualEntry = createServerFn({ method: "POST" })
     }
 
     await notifyConfirmed();
-    await appendActivity({
-      eventType: "milk_frozen",
-      frozenMilkEntryId: ids[0],
-    });
 
     return { ids };
   });
