@@ -59,7 +59,9 @@ When feeding expressed milk via bottle, use the lowest-flow nipple and pace the 
 |---|---|---|---|
 | 0–5 days | 30–45 | 10–12 | ~480 |
 | 5 days–4 weeks | 45–90 | 8–12 | ~700 |
-| 1–6 months | 60–120 | 6–10 | ~750 |
+| 1–2 months | 60–120 | 6–10 | ~750 |
+| 2–4 months | 60–120 | 6–8 | ~750 |
+| 4–6 months | 60–120 | 5–8 | ~750 |
 
 #### 6–12 months
 
@@ -98,7 +100,9 @@ Volumes are unmeasurable during direct breastfeeding. Track feeds per day instea
 |---|---|
 | 0–5 days | 10–12 |
 | 5 days–4 weeks | 8–12 |
-| 1–6 months | 6–10 |
+| 1–2 months | 6–10 |
+| 2–4 months | 6–8 |
+| 4–6 months | 5–8 |
 
 #### 6–12 months
 
@@ -154,4 +158,4 @@ Feed before baby cries — crying is a late hunger sign.
 
 ---
 
-*Last updated: July 2026. Sources: CDC Infant & Toddler Nutrition, AAP HealthyChildren.org, Stanford Children's Health, NHS Start for Life, KellyMom (research citations: Neville 1988, Salazar 2000, Dewey 1983, Kent 2006).*
+*Last updated: July 2026. Sources: CDC Infant & Toddler Nutrition, AAP HealthyChildren.org, Stanford Children's Health, NHS Start for Life, KellyMom (research citations: Neville 1988, Salazar 2000, Dewey 1983, Kent 2006). The narrower 1–2, 2–4, and 4–6 month bands reflect the AAP's guidance that breastfed feeds space out gradually while volume increases slowly and tops out around 4.5 oz per feed; they are not rigid targets. See [AAP: How Often and How Much Should Your Baby Eat?](https://www.healthychildren.org/English/ages-stages/baby/feeding-nutrition/Pages/How-Often-and-How-Much-Should-Your-Baby-Eat.aspx) and [CDC: Breastfeeding](https://www.cdc.gov/infant-toddler-nutrition/foods-and-drinks/breastfeeding/index.html).*

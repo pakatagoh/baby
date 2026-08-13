@@ -10,7 +10,7 @@ export interface FeedingRange {
   label: string;
   /** Minimum age in days (inclusive) */
   minDays: number;
-  /** Maximum age in days (inclusive) */
+  /** Maximum age in days (exclusive) */
   maxDays: number | null;
   /** Per-feed amount range in ml */
   perFeedMin: number;
@@ -49,13 +49,35 @@ export const feedingRanges: FeedingRange[] = [
     solids: null,
   },
   {
-    label: "1–6 months",
+    label: "1–2 months",
     minDays: 28,
-    maxDays: 180,
+    maxDays: 60,
     perFeedMin: 60,
     perFeedMax: 120,
     feedsMin: 6,
     feedsMax: 10,
+    dailyTotal: 750,
+    solids: null,
+  },
+  {
+    label: "2–4 months",
+    minDays: 60,
+    maxDays: 120,
+    perFeedMin: 60,
+    perFeedMax: 120,
+    feedsMin: 6,
+    feedsMax: 8,
+    dailyTotal: 750,
+    solids: null,
+  },
+  {
+    label: "4–6 months",
+    minDays: 120,
+    maxDays: 180,
+    perFeedMin: 60,
+    perFeedMax: 120,
+    feedsMin: 5,
+    feedsMax: 8,
     dailyTotal: 750,
     solids: null,
   },
@@ -121,7 +143,9 @@ export interface NursingRange {
 export const nursingRanges: NursingRange[] = [
   { label: "0–5 days", minDays: 0, maxDays: 5, feedsMin: 10, feedsMax: 12, solids: null },
   { label: "5 days – 4 weeks", minDays: 5, maxDays: 28, feedsMin: 8, feedsMax: 12, solids: null },
-  { label: "1–6 months", minDays: 28, maxDays: 180, feedsMin: 6, feedsMax: 10, solids: null },
+  { label: "1–2 months", minDays: 28, maxDays: 60, feedsMin: 6, feedsMax: 10, solids: null },
+  { label: "2–4 months", minDays: 60, maxDays: 120, feedsMin: 6, feedsMax: 8, solids: null },
+  { label: "4–6 months", minDays: 120, maxDays: 180, feedsMin: 5, feedsMax: 8, solids: null },
   {
     label: "6–8 months",
     minDays: 180,
@@ -176,7 +200,7 @@ export function findFeedingRange(
     const range = ranges[i];
     const inRange =
       ageDays >= range.minDays &&
-      (range.maxDays === null || ageDays <= range.maxDays);
+      (range.maxDays === null || ageDays < range.maxDays);
     if (inRange) {
       return {
         current: range,
