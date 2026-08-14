@@ -59,9 +59,7 @@ When feeding expressed milk via bottle, use the lowest-flow nipple and pace the 
 |---|---|---|---|
 | 0–5 days | 30–45 | 10–12 | ~480 |
 | 5 days–4 weeks | 45–90 | 8–12 | ~700 |
-| 1–2 months | 60–120 | 6–10 | ~750 |
-| 2–4 months | 60–120 | 6–8 | ~750 |
-| 4–6 months | 60–120 | 5–8 | ~750 |
+| 1–6 months | 60–120 | — | — |
 
 #### 6–12 months
 
@@ -73,7 +71,7 @@ Milk intake gradually decreases as solids increase. Offer breastmilk before soli
 | 8–10 months | 90–135 | 4–6 | ~650 | Increasing table foods + finger foods |
 | 10–12 months | 90–135 | 4–6 | ~600 | Cereal 5–8 tbsp · Veg 2–4 tbsp ×2 · Fruit 2–4 tbsp ×2 · Protein 2–3 tbsp ×2 |
 
-> AAP: breastfed infants top out at roughly **135 ml per feed** even at 1 year — far less than formula-fed babies who reach 180–240 ml per feed.
+> Offer approximately **60–120 ml per bottle** as a starting range only. Some babies take less or more, and may feed more frequently. Follow hunger and fullness cues rather than trying to reach a daily total.
 
 #### 12–24 months
 
@@ -100,9 +98,7 @@ Volumes are unmeasurable during direct breastfeeding. Track feeds per day instea
 |---|---|
 | 0–5 days | 10–12 |
 | 5 days–4 weeks | 8–12 |
-| 1–2 months | 6–10 |
-| 2–4 months | 6–8 |
-| 4–6 months | 5–8 |
+| 1–6 months | Responsive feeding; no fixed target |
 
 #### 6–12 months
 
@@ -158,4 +154,4 @@ Feed before baby cries — crying is a late hunger sign.
 
 ---
 
-*Last updated: July 2026. Sources: CDC Infant & Toddler Nutrition, AAP HealthyChildren.org, Stanford Children's Health, NHS Start for Life, KellyMom (research citations: Neville 1988, Salazar 2000, Dewey 1983, Kent 2006). The narrower 1–2, 2–4, and 4–6 month bands reflect the AAP's guidance that breastfed feeds space out gradually while volume increases slowly and tops out around 4.5 oz per feed; they are not rigid targets. See [AAP: How Often and How Much Should Your Baby Eat?](https://www.healthychildren.org/English/ages-stages/baby/feeding-nutrition/Pages/How-Often-and-How-Much-Should-Your-Baby-Eat.aspx) and [CDC: Breastfeeding](https://www.cdc.gov/infant-toddler-nutrition/foods-and-drinks/breastfeeding/index.html).*
+*Last updated: July 2026. Sources: CDC Infant & Toddler Nutrition, AAP HealthyChildren.org, USDA Nutrition Evidence Systematic Review, Stanford Children's Health, NHS Start for Life, KellyMom (research citations: Neville 1988, Salazar 2000, Dewey 1983, Kent 2006). There is no strong evidence for precise age-specific expressed-milk bottle amounts or a fixed daily total. See [AAP: How Often and How Much Should Your Baby Eat?](https://www.healthychildren.org/English/ages-stages/baby/feeding-nutrition/Pages/How-Often-and-How-Much-Should-Your-Baby-Eat.aspx), [USDA Nutrition Evidence Systematic Review](https://www.ncbi.nlm.nih.gov/books/NBK555869/), and [Pediatrics: Volume and Frequency of Breastfeedings](https://pubmed.ncbi.nlm.nih.gov/16510619/).*

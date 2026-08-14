@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getFeedingGuide } from "@/lib/feeding-guide-fn";
 import { FeedingOverview } from "@/pages/guides/FeedingOverview";
-import { DailyIntakeChart } from "@/pages/guides/DailyIntakeChart";
+
 
 export function GuidesPage() {
   const { data: guide } = useQuery({
@@ -38,7 +38,6 @@ export function GuidesPage() {
           {guide?.current && (
             <>
               <FeedingOverview current={guide.current} next={guide.next} />
-              <DailyIntakeChart currentRange={guide.current} />
             </>
           )}
 

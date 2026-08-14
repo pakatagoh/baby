@@ -1,5 +1,5 @@
 import type { FeedingRange } from "@/lib/feeding-guide-data";
-import { formatMlRange, formatFeeds } from "@/lib/feeding-guide-data";
+import { formatMlRange } from "@/lib/feeding-guide-data";
 
 interface Props {
   current: FeedingRange;
@@ -22,16 +22,9 @@ export function FeedingOverview({ current, next }: Props) {
               {formatMlRange(current.perFeedMin, current.perFeedMax)}
             </dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Feeds / day</dt>
-            <dd className="font-semibold">
-              {formatFeeds(current.feedsMin, current.feedsMax)}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Daily total</dt>
-            <dd className="font-semibold">~{current.dailyTotal} ml</dd>
-          </div>
+          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+            {current.guidance}
+          </p>
           {current.solids && (
             <div className="mt-2 rounded-lg bg-white/60 p-2 text-xs text-muted-foreground">
               🥄 <strong>Solids:</strong> {current.solids}
@@ -56,16 +49,9 @@ export function FeedingOverview({ current, next }: Props) {
                 {formatMlRange(next.perFeedMin, next.perFeedMax)}
               </dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Feeds / day</dt>
-              <dd className="font-medium">
-                {formatFeeds(next.feedsMin, next.feedsMax)}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Daily total</dt>
-              <dd className="font-medium">~{next.dailyTotal} ml</dd>
-            </div>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+              {next.guidance}
+            </p>
             {next.solids && (
               <div className="mt-2 rounded-lg bg-muted/50 p-2 text-xs text-muted-foreground">
                 🥄 <strong>Solids:</strong> {next.solids}

@@ -15,11 +15,8 @@ export interface FeedingRange {
   /** Per-feed amount range in ml */
   perFeedMin: number;
   perFeedMax: number;
-  /** Feeds per day range */
-  feedsMin: number;
-  feedsMax: number;
-  /** Approximate daily total in ml */
-  dailyTotal: number;
+  /** Practical guidance shown with the starting amount */
+  guidance: string;
   /** Solids guidance, if any */
   solids: string | null;
 }
@@ -32,9 +29,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 5,
     perFeedMin: 30,
     perFeedMax: 45,
-    feedsMin: 10,
-    feedsMax: 12,
-    dailyTotal: 480,
+    guidance: "Offer frequently and follow hunger and fullness cues.",
     solids: null,
   },
   {
@@ -43,42 +38,17 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 28,
     perFeedMin: 45,
     perFeedMax: 90,
-    feedsMin: 8,
-    feedsMax: 12,
-    dailyTotal: 700,
+    guidance: "Offer when hungry; avoid forcing a bottle to be finished.",
     solids: null,
   },
   {
-    label: "1–2 months",
+    label: "1–6 months",
     minDays: 28,
-    maxDays: 60,
-    perFeedMin: 60,
-    perFeedMax: 120,
-    feedsMin: 6,
-    feedsMax: 10,
-    dailyTotal: 750,
-    solids: null,
-  },
-  {
-    label: "2–4 months",
-    minDays: 60,
-    maxDays: 120,
-    perFeedMin: 60,
-    perFeedMax: 120,
-    feedsMin: 6,
-    feedsMax: 8,
-    dailyTotal: 750,
-    solids: null,
-  },
-  {
-    label: "4–6 months",
-    minDays: 120,
     maxDays: 180,
     perFeedMin: 60,
     perFeedMax: 120,
-    feedsMin: 5,
-    feedsMax: 8,
-    dailyTotal: 750,
+    guidance:
+      "Starting range only. Some babies take less or more, and may feed more frequently. Follow hunger and fullness cues rather than a daily target.",
     solids: null,
   },
   {
@@ -87,9 +57,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 240,
     perFeedMin: 90,
     perFeedMax: 120,
-    feedsMin: 5,
-    feedsMax: 8,
-    dailyTotal: 700,
+    guidance: "Offer breastmilk before solids and follow hunger and fullness cues.",
     solids:
       "Cereal 5–8 tbsp · Veg 2–3 tbsp ×2 · Fruit 2–3 tbsp ×2 · Meat 1–2 tbsp ×2",
   },
@@ -99,9 +67,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 300,
     perFeedMin: 90,
     perFeedMax: 135,
-    feedsMin: 4,
-    feedsMax: 6,
-    dailyTotal: 650,
+    guidance: "Milk needs vary as solids increase; continue responsive feeding.",
     solids: "Increasing table foods + finger foods",
   },
   {
@@ -110,9 +76,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 365,
     perFeedMin: 90,
     perFeedMax: 135,
-    feedsMin: 4,
-    feedsMax: 6,
-    dailyTotal: 600,
+    guidance: "Offer breastmilk before solids and follow hunger and fullness cues.",
     solids:
       "Cereal 5–8 tbsp · Veg 2–4 tbsp ×2 · Fruit 2–4 tbsp ×2 · Protein 2–3 tbsp ×2",
   },
@@ -122,9 +86,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 730,
     perFeedMin: 90,
     perFeedMax: 135,
-    feedsMin: 3,
-    feedsMax: 6,
-    dailyTotal: 475,
+    guidance: "Focus on responsive feeding and a balanced solid-food diet.",
     solids:
       "Focus on balanced solid-food diet. Switch to whole cow's milk if weaning.",
   },
