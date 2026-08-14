@@ -55,11 +55,11 @@ When feeding expressed milk via bottle, use the lowest-flow nipple and pace the 
 
 #### 0–6 months
 
-| Age | Per Feed (ml) | Feeds/Day | Daily Total (ml) |
-|---|---|---|---|
-| 0–5 days | 30–45 | 10–12 | ~480 |
-| 5 days–4 weeks | 45–90 | 8–12 | ~700 |
-| 1–6 months | 60–120 | — | — |
+| Age | Per Feed (ml) | Typical Interval |
+|---|---|---|
+| 0–5 days | 30–45 | About every 2–3 hours |
+| 5 days–4 weeks | 45–90 | Often every 2–3 hours; follow cues |
+| 1–6 months | 60–120 | Often every 2–4 hours; follow cues |
 
 #### 6–12 months
 
@@ -72,6 +72,8 @@ Milk intake gradually decreases as solids increase. Offer breastmilk before soli
 | 10–12 months | 90–135 | 4–6 | ~600 | Cereal 5–8 tbsp · Veg 2–4 tbsp ×2 · Fruit 2–4 tbsp ×2 · Protein 2–3 tbsp ×2 |
 
 > Offer approximately **60–120 ml per bottle** as a starting range only. Some babies take less or more, and may feed more frequently. Follow hunger and fullness cues rather than trying to reach a daily total.
+
+> Intervals are typical, not rules. Offer milk sooner when hungry, and stop when full. Do not stretch feeds to match the clock.
 
 #### 12–24 months
 

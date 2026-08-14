@@ -15,6 +15,8 @@ export interface FeedingRange {
   /** Per-feed amount range in ml */
   perFeedMin: number;
   perFeedMax: number;
+  /** Typical interval, explicitly not a rigid schedule */
+  interval: string;
   /** Practical guidance shown with the starting amount */
   guidance: string;
   /** Solids guidance, if any */
@@ -29,6 +31,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 5,
     perFeedMin: 30,
     perFeedMax: 45,
+    interval: "Offer about every 2–3 hours.",
     guidance: "Offer frequently and follow hunger and fullness cues.",
     solids: null,
   },
@@ -38,6 +41,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 28,
     perFeedMin: 45,
     perFeedMax: 90,
+    interval: "Often every 2–3 hours; follow cues.",
     guidance: "Offer when hungry; avoid forcing a bottle to be finished.",
     solids: null,
   },
@@ -47,6 +51,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 180,
     perFeedMin: 60,
     perFeedMax: 120,
+    interval: "Often every 2–4 hours; follow cues.",
     guidance:
       "Starting range only. Some babies take less or more, and may feed more frequently. Follow hunger and fullness cues rather than a daily target.",
     solids: null,
@@ -57,6 +62,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 240,
     perFeedMin: 90,
     perFeedMax: 120,
+    interval: "Responsive feeding; no fixed interval.",
     guidance: "Offer breastmilk before solids and follow hunger and fullness cues.",
     solids:
       "Cereal 5–8 tbsp · Veg 2–3 tbsp ×2 · Fruit 2–3 tbsp ×2 · Meat 1–2 tbsp ×2",
@@ -67,6 +73,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 300,
     perFeedMin: 90,
     perFeedMax: 135,
+    interval: "Responsive feeding; no fixed interval.",
     guidance: "Milk needs vary as solids increase; continue responsive feeding.",
     solids: "Increasing table foods + finger foods",
   },
@@ -76,6 +83,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 365,
     perFeedMin: 90,
     perFeedMax: 135,
+    interval: "Responsive feeding; no fixed interval.",
     guidance: "Offer breastmilk before solids and follow hunger and fullness cues.",
     solids:
       "Cereal 5–8 tbsp · Veg 2–4 tbsp ×2 · Fruit 2–4 tbsp ×2 · Protein 2–3 tbsp ×2",
@@ -86,6 +94,7 @@ export const feedingRanges: FeedingRange[] = [
     maxDays: 730,
     perFeedMin: 90,
     perFeedMax: 135,
+    interval: "Responsive feeding; no fixed interval.",
     guidance: "Focus on responsive feeding and a balanced solid-food diet.",
     solids:
       "Focus on balanced solid-food diet. Switch to whole cow's milk if weaning.",

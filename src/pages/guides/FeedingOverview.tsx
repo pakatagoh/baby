@@ -22,6 +22,12 @@ export function FeedingOverview({ current, next }: Props) {
               {formatMlRange(current.perFeedMin, current.perFeedMax)}
             </dd>
           </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">Typical interval</dt>
+            <dd className="max-w-[60%] text-right font-semibold">
+              {current.interval}
+            </dd>
+          </div>
           <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
             {current.guidance}
           </p>
@@ -47,6 +53,12 @@ export function FeedingOverview({ current, next }: Props) {
               <dt className="text-muted-foreground">Per feed</dt>
               <dd className="font-medium">
                 {formatMlRange(next.perFeedMin, next.perFeedMax)}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Typical interval</dt>
+              <dd className="max-w-[60%] text-right font-medium">
+                {next.interval}
               </dd>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">

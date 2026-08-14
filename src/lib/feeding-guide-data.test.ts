@@ -16,8 +16,14 @@ describe("feeding guide age bands", () => {
       perFeedMax: 120,
     });
     expect(range?.guidance).toContain("Starting range");
+    expect(range?.interval).toBe("Often every 2–4 hours; follow cues.");
     expect(range).not.toHaveProperty("feedsMin");
     expect(range).not.toHaveProperty("dailyTotal");
+  });
+
+  it("provides newborn intervals without turning them into rigid schedules", () => {
+    expect(feedingRanges[0].interval).toBe("Offer about every 2–3 hours.");
+    expect(feedingRanges[1].interval).toBe("Often every 2–3 hours; follow cues.");
   });
 
   it("uses the next band at each age boundary without overlap", () => {
