@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 interface GuideTabsProps {
   active: "feeding" | "expiration";
 }
@@ -13,9 +15,10 @@ export function GuideTabs({ active }: GuideTabsProps) {
       {tabs.map((tab) => {
         const isActive = tab.key === active;
         return (
-          <a
+          <Link
             key={tab.href}
-            href={tab.href}
+            to={tab.href}
+            preload="intent"
             aria-current={isActive ? "page" : undefined}
             className={
               isActive
@@ -24,7 +27,7 @@ export function GuideTabs({ active }: GuideTabsProps) {
             }
           >
             {tab.label}
-          </a>
+          </Link>
         );
       })}
     </nav>
