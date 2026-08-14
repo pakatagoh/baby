@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { id: "overview", label: "Overview", to: "/", icon: <Home className="size-5" /> },
   { id: "storage", label: "Storage", to: "/storage", icon: <Package className="size-5" /> },
   { id: "add", label: "Add", to: "", icon: <Plus className="size-6" />, cta: true },
-  { id: "guides", label: "Guides", to: "/guides", icon: <BookOpen className="size-5" /> },
+  { id: "guides", label: "Guides", to: "/guides/feed", icon: <BookOpen className="size-5" /> },
   { id: "settings", label: "Settings", to: "/settings", icon: <Settings className="size-5" /> },
 ];
 

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getFeedingGuide } from "@/lib/feeding-guide-fn";
 import { FeedingOverview } from "@/pages/guides/FeedingOverview";
+import { GuideTabs } from "@/pages/guides/GuideTabs";
 
 
 export function GuidesPage() {
@@ -20,6 +21,8 @@ export function GuidesPage() {
           </p>
         )}
       </div>
+
+      <GuideTabs active="feeding" />
 
       {!guide?.current && !guide?.ageDays ? (
         /* No DOB set — prompt user to set it */

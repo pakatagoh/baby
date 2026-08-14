@@ -11,11 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityRouteImport } from './routes/activity'
-import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as StorageRouteImport } from './routes/storage'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as GuidesExpirationRouteImport } from './routes/guides.expiration'
+import { Route as GuidesFeedRouteImport } from './routes/guides.feed'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as SettingsBabyRouteImport } from './routes/settings.baby'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
@@ -36,11 +37,6 @@ const ActivityRoute = ActivityRouteImport.update({
   path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesRoute = GuidesRouteImport.update({
-  id: '/guides',
-  path: '/guides',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -59,6 +55,16 @@ const StorageRoute = StorageRouteImport.update({
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesExpirationRoute = GuidesExpirationRouteImport.update({
+  id: '/guides/expiration',
+  path: '/guides/expiration',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesFeedRoute = GuidesFeedRouteImport.update({
+  id: '/guides/feed',
+  path: '/guides/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
@@ -110,11 +116,12 @@ const ApiHealthStartupRoute = ApiHealthStartupRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
-  '/guides': typeof GuidesRoute
   '/settings': typeof SettingsRouteWithChildren
   '/stats': typeof StatsRoute
   '/storage': typeof StorageRouteWithChildren
   '/api/health': typeof ApiHealthRouteWithChildren
+  '/guides/expiration': typeof GuidesExpirationRoute
+  '/guides/feed': typeof GuidesFeedRoute
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/sort': typeof SettingsSortRoute
@@ -128,9 +135,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
-  '/guides': typeof GuidesRoute
   '/stats': typeof StatsRoute
   '/api/health': typeof ApiHealthRouteWithChildren
+  '/guides/expiration': typeof GuidesExpirationRoute
+  '/guides/feed': typeof GuidesFeedRoute
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/sort': typeof SettingsSortRoute
@@ -145,11 +153,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
-  '/guides': typeof GuidesRoute
   '/settings': typeof SettingsRouteWithChildren
   '/stats': typeof StatsRoute
   '/storage': typeof StorageRouteWithChildren
   '/api/health': typeof ApiHealthRouteWithChildren
+  '/guides/expiration': typeof GuidesExpirationRoute
+  '/guides/feed': typeof GuidesFeedRoute
   '/settings/baby': typeof SettingsBabyRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/sort': typeof SettingsSortRoute
@@ -165,11 +174,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activity'
-    | '/guides'
     | '/settings'
     | '/stats'
     | '/storage'
     | '/api/health'
+    | '/guides/expiration'
+    | '/guides/feed'
     | '/settings/baby'
     | '/settings/notifications'
     | '/settings/sort'
@@ -183,9 +193,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activity'
-    | '/guides'
     | '/stats'
     | '/api/health'
+    | '/guides/expiration'
+    | '/guides/feed'
     | '/settings/baby'
     | '/settings/notifications'
     | '/settings/sort'
@@ -199,11 +210,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activity'
-    | '/guides'
     | '/settings'
     | '/stats'
     | '/storage'
     | '/api/health'
+    | '/guides/expiration'
+    | '/guides/feed'
     | '/settings/baby'
     | '/settings/notifications'
     | '/settings/sort'
@@ -218,11 +230,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRoute
-  GuidesRoute: typeof GuidesRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   StatsRoute: typeof StatsRoute
   StorageRoute: typeof StorageRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRouteWithChildren
+  GuidesExpirationRoute: typeof GuidesExpirationRoute
+  GuidesFeedRoute: typeof GuidesFeedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -239,13 +252,6 @@ declare module '@tanstack/react-router' {
       path: '/activity'
       fullPath: '/activity'
       preLoaderRoute: typeof ActivityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guides': {
-      id: '/guides'
-      path: '/guides'
-      fullPath: '/guides'
-      preLoaderRoute: typeof GuidesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -274,6 +280,20 @@ declare module '@tanstack/react-router' {
       path: '/api/health'
       fullPath: '/api/health'
       preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/expiration': {
+      id: '/guides/expiration'
+      path: '/guides/expiration'
+      fullPath: '/guides/expiration'
+      preLoaderRoute: typeof GuidesExpirationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/feed': {
+      id: '/guides/feed'
+      path: '/guides/feed'
+      fullPath: '/guides/feed'
+      preLoaderRoute: typeof GuidesFeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/': {
@@ -392,11 +412,12 @@ const ApiHealthRouteWithChildren = ApiHealthRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
-  GuidesRoute: GuidesRoute,
   SettingsRoute: SettingsRouteWithChildren,
   StatsRoute: StatsRoute,
   StorageRoute: StorageRouteWithChildren,
   ApiHealthRoute: ApiHealthRouteWithChildren,
+  GuidesExpirationRoute: GuidesExpirationRoute,
+  GuidesFeedRoute: GuidesFeedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
