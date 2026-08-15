@@ -37,7 +37,22 @@ const config = defineConfig({
   plugins: [
     devtools(),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      prerender: {
+        enabled: true,
+        autoStaticPathsDiscovery: false,
+        crawlLinks: false,
+      },
+      pages: [
+        {
+          path: "/guides/expiration",
+          prerender: {
+            enabled: true,
+            outputPath: "/guides/expiration/index.html",
+          },
+        },
+      ],
+    }),
     nitro({ plugins: ["./plugins/database.ts"] }),
     viteReact(),
     ...generatePwaWorkerOnlyForClient(
