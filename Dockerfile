@@ -4,6 +4,10 @@ FROM node:22-alpine AS build
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
+# TanStack prerendering starts the built server during image creation. The
+# database plugin needs a writable build-time SQLite path; runtime deployments
+# provide their own DATABASE_PATH.
+ENV DATABASE_PATH=/tmp/baby-build.sqlite
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
