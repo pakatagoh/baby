@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { MilkSheetEntry } from "@/lib/sheets";
 import type { FilterState } from "./FilterModal";
-import { filterStorageEntries, getStorageTabCounts } from "./storage-filtering";
+import {
+  filterStorageEntries,
+  getSelectedAmount,
+  getStorageTabCounts,
+} from "./storage-filtering";
 
 const noFilter: FilterState = {
   dateStart: "",
@@ -103,6 +107,10 @@ describe("storage filtering", () => {
     });
 
     expect(getStorageTabCounts(filteredEntries)).toEqual({ all: 3, frozen: 1, used: 2 });
+  });
+
+  it("sums the amounts of selected entries", () => {
+    expect(getSelectedAmount(entries, new Set(["frozen-in-range", "frozen-outside-range"]))).toBe(220);
   });
 
   it("returns zero for every tab when filters match no entries", () => {

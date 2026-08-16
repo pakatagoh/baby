@@ -34,6 +34,12 @@ export function filterStorageEntries(
   });
 }
 
+export function getSelectedAmount(entries: MilkSheetEntry[], selectedIds: Set<string>): number {
+  return entries
+    .filter((entry) => selectedIds.has(entry.id))
+    .reduce((sum, entry) => sum + entry.amount, 0);
+}
+
 export function getStorageTabCounts(entries: MilkSheetEntry[]) {
   return {
     all: entries.length,

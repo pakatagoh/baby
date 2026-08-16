@@ -14,7 +14,7 @@ import { StorageEntryCard } from "@/pages/storage/StorageEntryCard";
 import { BatchActionBar } from "@/pages/storage/BatchActionBar";
 import { FilterModal, type FilterState } from "@/pages/storage/FilterModal";
 import { EntryDetailModal } from "@/pages/storage/EntryDetailModal";
-import { filterStorageEntries, getStorageTabCounts } from "@/pages/storage/storage-filtering";
+import { filterStorageEntries, getSelectedAmount, getStorageTabCounts } from "@/pages/storage/storage-filtering";
 import { fetchSortOption, sortOptionToSortKey } from "@/lib/app-settings-fn";
 
 type TabId = "all" | "frozen" | "used";
@@ -66,6 +66,10 @@ export function StoragePage() {
   const totalMl = useMemo(
     () => entries.filter((entry) => !entry.used).reduce((sum, entry) => sum + entry.amount, 0),
     [entries],
+  );
+  const selectedAmountMl = useMemo(
+    () => getSelectedAmount(entries, selectedIds),
+    [entries, selectedIds],
   );
 
   // ── Tab filter ────────────────────────────────────────────────
@@ -196,7 +200,12 @@ export function StoragePage() {
       </div>
 
       {/* Batch action bar */}
-      <BatchActionBar selectedCount={selectedIds.size} onMarkUsed={handleMarkUsed} busy={busy} />
+      <BatchActionBar
+        selectedCount={selectedIds.size}
+        selectedAmountMl={selectedAmountMl}
+        onMarkUsed={handleMarkUsed}
+        busy={busy}
+      />
 
       {/* Filter modal */}
       <FilterModal
