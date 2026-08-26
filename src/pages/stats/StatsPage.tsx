@@ -6,7 +6,7 @@ import { DailyFrozenChart } from "@/pages/stats/DailyFrozenChart";
 import { MonthlyFrozenChart } from "@/pages/stats/MonthlyFrozenChart";
 import { FrozenUsedChart } from "@/pages/stats/FrozenUsedChart";
 import { getFrozenMs } from "@/lib/frozen-date";
-import { combineMonthlyEventData, combineWeeklyEventData, getDailyEventData, getMonthlyEventData, getWeeklyEventData } from "@/pages/stats/stats-data";
+import { combineDailyEventData, combineMonthlyEventData, getDailyEventData, getMonthlyEventData } from "@/pages/stats/stats-data";
 
 /** Get Monday 00:00 of the week `offset` weeks from now (0 = current, -1 = last week). */
 function getWeekMonday(offset: number): Date {
@@ -48,7 +48,6 @@ export function StatsPage() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const [halfYearOffset, setHalfYearOffset] = useState(0);
-  const [weeklyChartOffset, setWeeklyChartOffset] = useState(0);
 
   const weekMonday = useMemo(() => getWeekMonday(weekOffset), [weekOffset]);
   const monthStart = useMemo(() => getMonthStart(monthOffset), [monthOffset]);
@@ -102,6 +101,10 @@ export function StatsPage() {
     () => getDailyEventData(entries, weekMonday, "used"),
     [entries, weekMonday],
   );
+  const dailyComparisonData = useMemo(
+    () => combineDailyEventData(dailyData, dailyUsedData),
+    [dailyData, dailyUsedData],
+  );
 
   // ── Date range labels ───────────────────────────────────────
   const weekLabel = useMemo(() => {
@@ -139,21 +142,6 @@ export function StatsPage() {
       halfYearLabel: `Monthly Frozen · ${fmt(start)} – ${fmt(end)}`,
     };
   }, [entries, halfYearOffset]);
-  const weeklyChart = useMemo(() => {
-    const now = new Date();
-    const frozen = getWeeklyEventData(entries, weeklyChartOffset, now, "frozen");
-    const used = getWeeklyEventData(entries, weeklyChartOffset, now, "used");
-    const currentMonday = getWeekMonday(0);
-    const start = new Date(currentMonday);
-    start.setDate(currentMonday.getDate() + (weeklyChartOffset * 6 - 5) * 7);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6 * 7 - 1);
-    const fmt = (date: Date) => date.toLocaleDateString("en-SG", { day: "numeric", month: "short" });
-    return {
-      data: combineWeeklyEventData(frozen, used),
-      title: `Weekly Frozen vs Used · ${fmt(start)} – ${fmt(end)}`,
-    };
-  }, [entries, weeklyChartOffset]);
   const usedHalfYearLabel = halfYearLabel.replace("Monthly Frozen", "Monthly Used");
 
   // ── Navigation callbacks ────────────────────────────────────
@@ -163,8 +151,6 @@ export function StatsPage() {
   const nextMonth = useCallback(() => setMonthOffset((o) => o + 1), []);
   const prevHalfYear = useCallback(() => setHalfYearOffset((o) => o - 1), []);
   const nextHalfYear = useCallback(() => setHalfYearOffset((o) => o + 1), []);
-  const prevWeeklyChart = useCallback(() => setWeeklyChartOffset((o) => o - 1), []);
-  const nextWeeklyChart = useCallback(() => setWeeklyChartOffset((o) => o + 1), []);
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
@@ -230,11 +216,11 @@ export function StatsPage() {
       />
       {/* Weekly Frozen vs Used comparison chart */}
       <FrozenUsedChart
-        title={weeklyChart.title}
-        data={weeklyChart.data}
-        xAxisDataKey="week"
-        onPrev={prevWeeklyChart}
-        onNext={nextWeeklyChart}
+        title={`Frozen vs Used · ${weekLabel}`}
+        data={dailyComparisonData}
+        xAxisDataKey="label"
+        onPrev={prevWeek}
+        onNext={nextWeek}
       />
       <h1 className="sr-only">Stats</h1>
     </main>

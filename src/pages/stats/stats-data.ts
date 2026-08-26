@@ -74,40 +74,13 @@ export function getMonthlyEventData(
   return data;
 }
 
-export function getWeeklyEventData(
-  entries: MilkSheetEntry[],
-  windowOffset: number,
-  now: Date,
-  event: StatsEvent,
-) {
-  const currentMonday = new Date(now);
-  currentMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  currentMonday.setHours(0, 0, 0, 0);
-  const start = new Date(currentMonday);
-  start.setDate(currentMonday.getDate() + (windowOffset * 6 - 5) * 7);
-  const data = Array.from({ length: 6 }, (_, index) => {
-    const weekStart = new Date(start);
-    weekStart.setDate(start.getDate() + index * 7);
-    return { week: `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()]}`, ml: 0 };
-  });
-
-  for (const entry of entries) {
-    const eventMs = getEventMs(entry, event);
-    if (Number.isNaN(eventMs)) continue;
-    const date = new Date(eventMs);
-    const weekIndex = Math.floor((eventMs - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
-    if (weekIndex >= 0 && weekIndex < 6 && date >= start) data[weekIndex].ml += entry.amount;
-  }
-
-  return data;
-}
-
-export function combineWeeklyEventData(
-  frozenData: Array<{ week: string; ml: number }>,
-  usedData: Array<{ week: string; ml: number }>,
+export function combineDailyEventData(
+  frozenData: Array<{ day: string; label: string; ml: number }>,
+  usedData: Array<{ day: string; label: string; ml: number }>,
 ) {
   return frozenData.map((frozen, index) => ({
-    week: frozen.week,
+    day: frozen.day,
+    label: frozen.label,
     frozen: frozen.ml,
     used: usedData[index]?.ml ?? 0,
   }));

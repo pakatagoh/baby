@@ -13,6 +13,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 interface CombinedData {
   month?: string;
   week?: string;
+  label?: string;
   frozen: number;
   used: number;
 }
@@ -20,7 +21,7 @@ interface CombinedData {
 interface FrozenUsedChartProps {
   title: string;
   data: CombinedData[];
-  xAxisDataKey?: "month" | "week";
+  xAxisDataKey?: "month" | "week" | "label";
   onPrev: () => void;
   onNext: () => void;
 }

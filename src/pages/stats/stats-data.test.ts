@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MilkSheetEntry } from "@/lib/sheets";
-import { getDailyEventData, getMonthlyEventData, getWeeklyEventData, combineMonthlyEventData, combineWeeklyEventData } from "./stats-data";
+import { combineDailyEventData, combineMonthlyEventData, getDailyEventData, getMonthlyEventData } from "./stats-data";
 
 function entry(overrides: Partial<MilkSheetEntry>): MilkSheetEntry {
   return {
@@ -78,23 +78,13 @@ describe("used milk chart data", () => {
     ]);
   });
 
-  it("groups frozen and used amounts into six navigable weekly points", () => {
-    const entries = [
-      entry({ amount: 300, frozenAt: "2026-06-01T10:00:00Z", used: true, usedAt: "2026-06-03T10:00:00Z" }),
-      entry({ amount: 200, frozenAt: "2026-06-15T10:00:00Z", used: true, usedAt: "2026-06-18T10:00:00Z" }),
-    ];
-    const now = new Date("2026-06-17T00:00:00Z");
-    const frozen = getWeeklyEventData(entries, 0, now, "frozen");
-    const used = getWeeklyEventData(entries, 0, now, "used");
-
-    expect(combineWeeklyEventData(frozen, used)).toEqual([
-      { week: "11 May", frozen: 0, used: 0 },
-      { week: "18 May", frozen: 0, used: 0 },
-      { week: "25 May", frozen: 0, used: 0 },
-      { week: "1 Jun", frozen: 300, used: 300 },
-      { week: "8 Jun", frozen: 0, used: 0 },
-      { week: "15 Jun", frozen: 200, used: 200 },
-    ]);
+  it("combines the selected week's frozen and used daily series", () => {
+    expect(
+      combineDailyEventData(
+        [{ day: "Mon", label: "Mon 6/7", ml: 300 }],
+        [{ day: "Mon", label: "Mon 6/7", ml: 100 }],
+      ),
+    ).toEqual([{ day: "Mon", label: "Mon 6/7", frozen: 300, used: 100 }]);
   });
 
   it("combines frozen and used monthly series without changing either value", () => {
