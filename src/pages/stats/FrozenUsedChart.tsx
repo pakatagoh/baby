@@ -1,28 +1,29 @@
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
   CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface MonthlyData {
+interface CombinedMonthlyData {
   month: string;
-  ml: number;
+  frozen: number;
+  used: number;
 }
 
-interface MonthlyFrozenChartProps {
+interface FrozenUsedChartProps {
   title: string;
-  data: MonthlyData[];
+  data: CombinedMonthlyData[];
   onPrev: () => void;
   onNext: () => void;
-  metricLabel?: "Frozen" | "Used";
 }
 
-export function MonthlyFrozenChart({ title, data, onPrev, onNext, metricLabel = "Frozen" }: MonthlyFrozenChartProps) {
+export function FrozenUsedChart({ title, data, onPrev, onNext }: FrozenUsedChartProps) {
   return (
     <div className="rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-border/50">
       <div className="mb-3 flex items-center justify-between">
@@ -35,14 +36,13 @@ export function MonthlyFrozenChart({ title, data, onPrev, onNext, metricLabel = 
         </button>
       </div>
 
-      <div className="h-56">
+      <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 4 }}>
+          <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
             <XAxis
               dataKey="month"
               tick={{ fontSize: 11, fill: "#9ca3af" }}
-              interval={0}
               axisLine={false}
               tickLine={false}
             />
@@ -59,15 +59,32 @@ export function MonthlyFrozenChart({ title, data, onPrev, onNext, metricLabel = 
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value} ml`, metricLabel]}
+              formatter={(value: number) => [`${value} ml`]}
             />
-            <Bar
-              dataKey="ml"
-              fill="#c07d8e"
-              radius={[4, 4, 0, 0]}
-              maxBarSize={40}
+            <Legend
+              wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+              iconType="circle"
+              iconSize={7}
             />
-          </BarChart>
+            <Line
+              type="monotone"
+              dataKey="frozen"
+              name="Frozen"
+              stroke="#6f9fc5"
+              strokeWidth={2.5}
+              dot={{ r: 3, fill: "#6f9fc5", strokeWidth: 0 }}
+              activeDot={{ r: 5 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="used"
+              name="Used"
+              stroke="#c97886"
+              strokeWidth={2.5}
+              dot={{ r: 3, fill: "#c97886", strokeWidth: 0 }}
+              activeDot={{ r: 5 }}
+            />
+          </LineChart>
         </ResponsiveContainer>
       </div>
     </div>

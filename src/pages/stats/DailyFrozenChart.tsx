@@ -41,9 +41,10 @@ interface DailyFrozenChartProps {
   data: DailyData[];
   onPrev: () => void;
   onNext: () => void;
+  metricLabel?: "Frozen" | "Used";
 }
 
-export function DailyFrozenChart({ title, data, onPrev, onNext }: DailyFrozenChartProps) {
+export function DailyFrozenChart({ title, data, onPrev, onNext, metricLabel = "Frozen" }: DailyFrozenChartProps) {
   return (
     <div className="rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-border/50">
       <div className="mb-3 flex items-center justify-between">
@@ -80,7 +81,7 @@ export function DailyFrozenChart({ title, data, onPrev, onNext }: DailyFrozenCha
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value} ml`, "Frozen"]}
+              formatter={(value: number) => [`${value} ml`, metricLabel]}
             />
             <Bar
               dataKey="ml"

@@ -4,7 +4,9 @@ import { getEntries } from "@/lib/entries-fn";
 import { PeriodSummaryCard } from "@/pages/stats/PeriodSummaryCard";
 import { DailyFrozenChart } from "@/pages/stats/DailyFrozenChart";
 import { MonthlyFrozenChart } from "@/pages/stats/MonthlyFrozenChart";
+import { FrozenUsedChart } from "@/pages/stats/FrozenUsedChart";
 import { getFrozenMs } from "@/lib/frozen-date";
+import { combineMonthlyEventData, getDailyEventData, getMonthlyEventData } from "@/pages/stats/stats-data";
 
 /** Get Monday 00:00 of the week `offset` weeks from now (0 = current, -1 = last week). */
 function getWeekMonday(offset: number): Date {
@@ -36,8 +38,6 @@ function isInMonth(ts: number, start: Date): boolean {
   const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59, 999);
   return ts >= start.getTime() && ts <= end.getTime();
 }
-
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 export function StatsPage() {
   const { data: entries = [] } = useQuery({
@@ -92,35 +92,15 @@ export function StatsPage() {
     return { monthAdded: added, monthUsed: used };
   }, [entries, monthStart]);
 
-  // ── Daily frozen (for selected week) ─────────────────────────
-  const dailyData = useMemo(() => {
-    const daily: Record<string, number> = {};
-    for (const day of DAYS) daily[day] = 0;
-
-    for (const e of entries) {
-      const freezeMs = getFrozenMs(e);
-      if (Number.isNaN(freezeMs)) continue;
-      const d = new Date(freezeMs);
-      if (d.getTime() >= weekMonday.getTime()) {
-        const dayIdx = (d.getDay() + 6) % 7;
-        if (dayIdx >= 0 && dayIdx < 7) {
-          const weekSun = new Date(weekMonday);
-          weekSun.setDate(weekMonday.getDate() + 6);
-          weekSun.setHours(23, 59, 59, 999);
-          if (d.getTime() <= weekSun.getTime()) {
-            daily[DAYS[dayIdx]] += e.amount;
-          }
-        }
-      }
-    }
-
-    return DAYS.map((day, i) => {
-      const date = new Date(weekMonday);
-      date.setDate(weekMonday.getDate() + i);
-      const label = `${day} ${date.getDate()}/${date.getMonth() + 1}`;
-      return { day, label, ml: daily[day] };
-    });
-  }, [entries, weekMonday]);
+  // ── Daily charts (for selected week) ─────────────────────────
+  const dailyData = useMemo(
+    () => getDailyEventData(entries, weekMonday, "frozen"),
+    [entries, weekMonday],
+  );
+  const dailyUsedData = useMemo(
+    () => getDailyEventData(entries, weekMonday, "used"),
+    [entries, weekMonday],
+  );
 
   // ── Date range labels ───────────────────────────────────────
   const weekLabel = useMemo(() => {
@@ -143,51 +123,22 @@ export function StatsPage() {
     return `Daily Frozen · ${fmt(weekMonday)} – ${fmt(sun)}`;
   }, [weekMonday]);
 
-  // ── Monthly frozen (half-year window) ─────────────────────────
-  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-
-  const { monthlyData, halfYearLabel } = useMemo(() => {
+  // ── Monthly charts (half-year window) ─────────────────────────
+  const { monthlyData, monthlyUsedData, combinedData, halfYearLabel } = useMemo(() => {
     const now = new Date();
-    // Current half: Jan-Jun if month ≤ 5, else Jul-Dec
-    const currentHalfStart = now.getMonth() < 6 ? 0 : 6;
-    const halfStartMonth = currentHalfStart + halfYearOffset * 6;
-
-    // Compute the year for this half
-    const halfYear = now.getFullYear() + Math.floor((now.getMonth() + halfYearOffset * 6) / 12);
-
-    const monthly: Record<string, number> = {};
-    for (let i = 0; i < 6; i++) {
-      const mIdx = (halfStartMonth + i + 12) % 12;
-      monthly[MONTHS[mIdx]] = 0;
-    }
-
-    // Map for matching: "Jan" → [2026], "Feb" → [2026], etc.
-    const monthYears: Record<string, number> = {};
-    for (let i = 0; i < 6; i++) {
-      const mIdx = (halfStartMonth + i + 12) % 12;
-      const mYear = halfYear + Math.floor((halfStartMonth + i) / 12);
-      monthYears[MONTHS[mIdx]] = mYear;
-    }
-
-    for (const e of entries) {
-      const freezeMs = getFrozenMs(e);
-      if (Number.isNaN(freezeMs)) continue;
-      const d = new Date(freezeMs);
-      const mName = MONTHS[d.getMonth()];
-      if (monthYears[mName] === d.getFullYear()) {
-        monthly[mName] = (monthly[mName] ?? 0) + e.amount;
-      }
-    }
-
-    const data = Object.entries(monthly).map(([month, ml]) => ({ month, ml }));
-    const first = data[0]?.month ?? "";
-    const last = data[data.length - 1]?.month ?? "";
-    const firstYear = monthYears[first] ?? "";
-    const lastYear = monthYears[last] ?? "";
-    const label = `Monthly Frozen · ${first} ${firstYear} – ${last} ${lastYear}`;
-
-    return { monthlyData: data, halfYearLabel: label };
+    const frozen = getMonthlyEventData(entries, halfYearOffset, now, "frozen");
+    const used = getMonthlyEventData(entries, halfYearOffset, now, "used");
+    const start = new Date(now.getFullYear(), (now.getMonth() < 6 ? 0 : 6) + halfYearOffset * 6, 1);
+    const end = new Date(start.getFullYear(), start.getMonth() + 5, 1);
+    const fmt = (date: Date) => date.toLocaleDateString("en-SG", { month: "short", year: "numeric" });
+    return {
+      monthlyData: frozen,
+      monthlyUsedData: used,
+      combinedData: combineMonthlyEventData(frozen, used),
+      halfYearLabel: `Monthly Frozen · ${fmt(start)} – ${fmt(end)}`,
+    };
   }, [entries, halfYearOffset]);
+  const usedHalfYearLabel = halfYearLabel.replace("Monthly Frozen", "Monthly Used");
 
   // ── Navigation callbacks ────────────────────────────────────
   const prevWeek = useCallback(() => setWeekOffset((o) => o - 1), []);
@@ -227,10 +178,35 @@ export function StatsPage() {
         onNext={nextWeek}
       />
 
+      {/* Daily used chart */}
+      <DailyFrozenChart
+        title={chartTitle.replace("Daily Frozen", "Daily Used")}
+        data={dailyUsedData}
+        onPrev={prevWeek}
+        onNext={nextWeek}
+        metricLabel="Used"
+      />
+
       {/* Monthly chart */}
       <MonthlyFrozenChart
         title={halfYearLabel}
         data={monthlyData}
+        onPrev={prevHalfYear}
+        onNext={nextHalfYear}
+      />
+
+      {/* Monthly used chart */}
+      <MonthlyFrozenChart
+        title={usedHalfYearLabel}
+        data={monthlyUsedData}
+        onPrev={prevHalfYear}
+        onNext={nextHalfYear}
+        metricLabel="Used"
+      />
+      {/* Frozen vs Used comparison chart */}
+      <FrozenUsedChart
+        title={halfYearLabel.replace("Monthly Frozen", "Frozen vs Used")}
+        data={combinedData}
         onPrev={prevHalfYear}
         onNext={nextHalfYear}
       />
