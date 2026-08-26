@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MilkSheetEntry } from "@/lib/sheets";
-import { getDailyEventData, getMonthlyEventData, combineMonthlyEventData } from "./stats-data";
+import { getDailyEventData, getMonthlyEventData, getWeeklyEventData, combineMonthlyEventData, combineWeeklyEventData } from "./stats-data";
 
 function entry(overrides: Partial<MilkSheetEntry>): MilkSheetEntry {
   return {
@@ -75,6 +75,25 @@ describe("used milk chart data", () => {
       { month: "Oct", ml: 0 },
       { month: "Nov", ml: 0 },
       { month: "Dec", ml: 0 },
+    ]);
+  });
+
+  it("groups frozen and used amounts into six navigable weekly points", () => {
+    const entries = [
+      entry({ amount: 300, frozenAt: "2026-06-01T10:00:00Z", used: true, usedAt: "2026-06-03T10:00:00Z" }),
+      entry({ amount: 200, frozenAt: "2026-06-15T10:00:00Z", used: true, usedAt: "2026-06-18T10:00:00Z" }),
+    ];
+    const now = new Date("2026-06-17T00:00:00Z");
+    const frozen = getWeeklyEventData(entries, 0, now, "frozen");
+    const used = getWeeklyEventData(entries, 0, now, "used");
+
+    expect(combineWeeklyEventData(frozen, used)).toEqual([
+      { week: "11 May", frozen: 0, used: 0 },
+      { week: "18 May", frozen: 0, used: 0 },
+      { week: "25 May", frozen: 0, used: 0 },
+      { week: "1 Jun", frozen: 300, used: 300 },
+      { week: "8 Jun", frozen: 0, used: 0 },
+      { week: "15 Jun", frozen: 200, used: 200 },
     ]);
   });
 

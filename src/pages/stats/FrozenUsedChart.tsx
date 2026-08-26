@@ -10,20 +10,22 @@ import {
 } from "recharts";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface CombinedMonthlyData {
-  month: string;
+interface CombinedData {
+  month?: string;
+  week?: string;
   frozen: number;
   used: number;
 }
 
 interface FrozenUsedChartProps {
   title: string;
-  data: CombinedMonthlyData[];
+  data: CombinedData[];
+  xAxisDataKey?: "month" | "week";
   onPrev: () => void;
   onNext: () => void;
 }
 
-export function FrozenUsedChart({ title, data, onPrev, onNext }: FrozenUsedChartProps) {
+export function FrozenUsedChart({ title, data, xAxisDataKey = "month", onPrev, onNext }: FrozenUsedChartProps) {
   return (
     <div className="rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-border/50">
       <div className="mb-3 flex items-center justify-between">
@@ -41,7 +43,7 @@ export function FrozenUsedChart({ title, data, onPrev, onNext }: FrozenUsedChart
           <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
             <XAxis
-              dataKey="month"
+              dataKey={xAxisDataKey}
               tick={{ fontSize: 11, fill: "#9ca3af" }}
               axisLine={false}
               tickLine={false}
