@@ -23,6 +23,8 @@ interface MonthlyFrozenChartProps {
 }
 
 export function MonthlyFrozenChart({ title, data, onPrev, onNext, metricLabel = "Frozen" }: MonthlyFrozenChartProps) {
+  const barColor = metricLabel === "Frozen" ? "#6f9fc5" : "#c97886";
+
   return (
     <div className="rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-border/50">
       <div className="mb-3 flex items-center justify-between">
@@ -63,7 +65,7 @@ export function MonthlyFrozenChart({ title, data, onPrev, onNext, metricLabel = 
             />
             <Bar
               dataKey="ml"
-              fill="#c07d8e"
+              fill={barColor}
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
             />
