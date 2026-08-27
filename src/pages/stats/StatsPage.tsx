@@ -49,6 +49,7 @@ export function StatsPage() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const [halfYearOffset, setHalfYearOffset] = useState(0);
+  const [view, setView] = useState<"weekly" | "monthly">("monthly");
 
   const weekMonday = useMemo(() => getWeekMonday(weekOffset), [weekOffset]);
   const monthStart = useMemo(() => getMonthStart(monthOffset), [monthOffset]);
@@ -163,88 +164,128 @@ export function StatsPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
-      {/* Period cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <PeriodSummaryCard
-          title="Week"
-          subtitle={weekLabel}
-          added={weekAdded}
-          used={weekUsed}
+      <div className="sticky top-0 z-10 -mx-4 bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="grid grid-cols-2 gap-2 rounded-lg bg-white p-1 shadow-sm ring-1 ring-border/50" role="group" aria-label="Stats view">
+          <button
+            type="button"
+            aria-pressed={view === "weekly"}
+            onClick={() => setView("weekly")}
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              view === "weekly" ? "bg-primary text-primary-foreground" : "border border-black bg-white text-foreground"
+            }`}
+          >
+            Weekly
+          </button>
+          <button
+            type="button"
+            aria-pressed={view === "monthly"}
+            onClick={() => setView("monthly")}
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              view === "monthly" ? "bg-primary text-primary-foreground" : "border border-black bg-white text-foreground"
+            }`}
+          >
+            Monthly
+          </button>
+        </div>
+      </div>
+      {view === "weekly" ? (
+        <div className="grid grid-cols-2 gap-3">
+          <PeriodSummaryCard
+            title="Week"
+            subtitle={weekLabel}
+            added={weekAdded}
+            used={weekUsed}
+            onPrev={prevWeek}
+            onNext={nextWeek}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <PeriodSummaryCard
+            title="Month"
+            subtitle={monthLabel}
+            added={monthAdded}
+            used={monthUsed}
+            onPrev={prevMonth}
+            onNext={nextMonth}
+          />
+        </div>
+      )}
+
+      {view === "weekly" ? (
+        <TotalFrozenOverTimeChart
+          title={`Frozen Milk Remaining · ${weekLabel}`}
+          data={weeklyRemainingData}
           onPrev={prevWeek}
           onNext={nextWeek}
         />
-        <PeriodSummaryCard
-          title="Month"
-          subtitle={monthLabel}
-          added={monthAdded}
-          used={monthUsed}
-          onPrev={prevMonth}
-          onNext={nextMonth}
+      ) : (
+        <TotalFrozenOverTimeChart
+          title={`Frozen Milk Remaining · ${halfYearLabel.replace("Monthly Frozen · ", "")}`}
+          data={monthlyRemainingData}
+          onPrev={prevHalfYear}
+          onNext={nextHalfYear}
         />
-      </div>
+      )}
 
-      <TotalFrozenOverTimeChart
-        title={`Frozen Milk Remaining · ${weekLabel}`}
-        data={weeklyRemainingData}
-        onPrev={prevWeek}
-        onNext={nextWeek}
-      />
+      {view === "weekly" && (
+        <>
+          {/* Daily chart */}
+          <DailyFrozenChart
+            title={chartTitle}
+            data={dailyData}
+            onPrev={prevWeek}
+            onNext={nextWeek}
+          />
 
-      <TotalFrozenOverTimeChart
-        title={`Frozen Milk Remaining · ${halfYearLabel.replace("Monthly Frozen · ", "")}`}
-        data={monthlyRemainingData}
-        onPrev={prevHalfYear}
-        onNext={nextHalfYear}
-      />
+          {/* Daily used chart */}
+          <DailyFrozenChart
+            title={chartTitle.replace("Daily Frozen", "Daily Used")}
+            data={dailyUsedData}
+            onPrev={prevWeek}
+            onNext={nextWeek}
+            metricLabel="Used"
+          />
 
-      {/* Daily chart */}
-      <DailyFrozenChart
-        title={chartTitle}
-        data={dailyData}
-        onPrev={prevWeek}
-        onNext={nextWeek}
-      />
+          {/* Weekly Frozen vs Used comparison chart */}
+          <FrozenUsedChart
+            title={`Frozen vs Used · ${weekLabel}`}
+            data={dailyComparisonData}
+            xAxisDataKey="label"
+            onPrev={prevWeek}
+            onNext={nextWeek}
+          />
+        </>
+      )}
 
-      {/* Daily used chart */}
-      <DailyFrozenChart
-        title={chartTitle.replace("Daily Frozen", "Daily Used")}
-        data={dailyUsedData}
-        onPrev={prevWeek}
-        onNext={nextWeek}
-        metricLabel="Used"
-      />
+      {view === "monthly" && (
+        <>
+          {/* Monthly chart */}
+          <MonthlyFrozenChart
+            title={halfYearLabel}
+            data={monthlyData}
+            onPrev={prevHalfYear}
+            onNext={nextHalfYear}
+          />
 
-      {/* Monthly chart */}
-      <MonthlyFrozenChart
-        title={halfYearLabel}
-        data={monthlyData}
-        onPrev={prevHalfYear}
-        onNext={nextHalfYear}
-      />
+          {/* Monthly used chart */}
+          <MonthlyFrozenChart
+            title={usedHalfYearLabel}
+            data={monthlyUsedData}
+            onPrev={prevHalfYear}
+            onNext={nextHalfYear}
+            metricLabel="Used"
+          />
 
-      {/* Monthly used chart */}
-      <MonthlyFrozenChart
-        title={usedHalfYearLabel}
-        data={monthlyUsedData}
-        onPrev={prevHalfYear}
-        onNext={nextHalfYear}
-        metricLabel="Used"
-      />
-      {/* Frozen vs Used comparison chart */}
-      <FrozenUsedChart
-        title={halfYearLabel.replace("Monthly Frozen", "Frozen vs Used")}
-        data={combinedData}
-        onPrev={prevHalfYear}
-        onNext={nextHalfYear}
-      />
-      {/* Weekly Frozen vs Used comparison chart */}
-      <FrozenUsedChart
-        title={`Frozen vs Used · ${weekLabel}`}
-        data={dailyComparisonData}
-        xAxisDataKey="label"
-        onPrev={prevWeek}
-        onNext={nextWeek}
-      />
+          {/* Monthly Frozen vs Used comparison chart */}
+          <FrozenUsedChart
+            title={halfYearLabel.replace("Monthly Frozen", "Frozen vs Used")}
+            data={combinedData}
+            onPrev={prevHalfYear}
+            onNext={nextHalfYear}
+          />
+        </>
+      )}
       <h1 className="sr-only">Stats</h1>
     </main>
   );
