@@ -53,6 +53,12 @@ export function MonthlyFrozenChart({ title, data, onPrev, onNext, metricLabel = 
               axisLine={false}
               tickLine={false}
               width={45}
+              label={{
+                value: "ml",
+                angle: -90,
+                position: "insideLeft",
+                style: { textAnchor: "middle", fill: "#9ca3af", fontSize: 10 },
+              }}
             />
             <Tooltip
               contentStyle={{
