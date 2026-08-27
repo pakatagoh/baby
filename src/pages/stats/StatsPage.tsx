@@ -49,7 +49,7 @@ export function StatsPage() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const [halfYearOffset, setHalfYearOffset] = useState(0);
-  const [view, setView] = useState<"weekly" | "monthly">("monthly");
+  const [view, setView] = useState<"weekly" | "monthly">("weekly");
 
   const weekMonday = useMemo(() => getWeekMonday(weekOffset), [weekOffset]);
   const monthStart = useMemo(() => getMonthStart(monthOffset), [monthOffset]);
@@ -164,14 +164,14 @@ export function StatsPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6">
-      <div className="sticky top-0 z-10 -mx-4 bg-background/95 px-4 py-3 backdrop-blur">
-        <div className="grid grid-cols-2 gap-2 rounded-lg bg-white p-1 shadow-sm ring-1 ring-border/50" role="group" aria-label="Stats view">
+      <div className="sticky top-0 z-10 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="grid grid-cols-2 gap-2" role="group" aria-label="Stats view">
           <button
             type="button"
             aria-pressed={view === "weekly"}
             onClick={() => setView("weekly")}
             className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              view === "weekly" ? "bg-primary text-primary-foreground" : "border border-black bg-white text-foreground"
+              view === "weekly" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"
             }`}
           >
             Weekly
@@ -181,7 +181,7 @@ export function StatsPage() {
             aria-pressed={view === "monthly"}
             onClick={() => setView("monthly")}
             className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              view === "monthly" ? "bg-primary text-primary-foreground" : "border border-black bg-white text-foreground"
+              view === "monthly" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"
             }`}
           >
             Monthly
