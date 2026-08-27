@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MilkSheetEntry } from "@/lib/sheets";
-import { combineDailyEventData, combineMonthlyEventData, getDailyEventData, getMonthlyEventData } from "./stats-data";
+import { combineDailyEventData, combineMonthlyEventData, getCumulativeFrozenData, getDailyEventData, getMonthlyEventData } from "./stats-data";
 
 function entry(overrides: Partial<MilkSheetEntry>): MilkSheetEntry {
   return {
@@ -21,6 +21,20 @@ function entry(overrides: Partial<MilkSheetEntry>): MilkSheetEntry {
 }
 
 describe("used milk chart data", () => {
+  it("builds chronologically sorted cumulative frozen totals", () => {
+    expect(
+      getCumulativeFrozenData([
+        entry({ amount: 80, frozenAt: "2026-06-03T09:00:00Z" }),
+        entry({ amount: 100, frozenAt: "2026-06-01T09:00:00Z" }),
+        entry({ amount: 50, frozenAt: "2026-06-03T10:00:00Z" }),
+        entry({ amount: 999, frozenAt: "not-a-date" }),
+      ]),
+    ).toEqual([
+      { date: "1 Jun", totalMl: 100 },
+      { date: "3 Jun", totalMl: 230 },
+    ]);
+  });
+
   it("groups used amounts by the date they were marked used", () => {
     const monday = new Date("2026-07-06T00:00:00Z");
     const entries = [

@@ -20,6 +20,41 @@ export function getEventMs(entry: MilkSheetEntry, event: StatsEvent): number {
   return getFrozenMs(entry);
 }
 
+export function getCumulativeFrozenData(entries: MilkSheetEntry[]) {
+  const dailyTotals = new Map<string, { year: number; month: number; day: number; amount: number }>();
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Singapore",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
+
+  for (const entry of entries) {
+    const frozenMs = getFrozenMs(entry);
+    if (Number.isNaN(frozenMs)) continue;
+    const parts = Object.fromEntries(
+      formatter.formatToParts(new Date(frozenMs)).map((part) => [part.type, part.value]),
+    );
+    const year = Number(parts.year);
+    const month = Number(parts.month);
+    const day = Number(parts.day);
+    const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const current = dailyTotals.get(key);
+    dailyTotals.set(key, {
+      year,
+      month,
+      day,
+      amount: (current?.amount ?? 0) + entry.amount,
+    });
+  }
+
+  let totalMl = 0;
+  return [...dailyTotals.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, value]) => {
+    totalMl += value.amount;
+    return { date: `${value.day} ${MONTHS[value.month - 1]}`, totalMl };
+  });
+}
+
 export function getDailyEventData(
   entries: MilkSheetEntry[],
   weekMonday: Date,

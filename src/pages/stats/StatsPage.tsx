@@ -5,8 +5,9 @@ import { PeriodSummaryCard } from "@/pages/stats/PeriodSummaryCard";
 import { DailyFrozenChart } from "@/pages/stats/DailyFrozenChart";
 import { MonthlyFrozenChart } from "@/pages/stats/MonthlyFrozenChart";
 import { FrozenUsedChart } from "@/pages/stats/FrozenUsedChart";
+import { TotalFrozenOverTimeChart } from "@/pages/stats/TotalFrozenOverTimeChart";
 import { getFrozenMs } from "@/lib/frozen-date";
-import { combineDailyEventData, combineMonthlyEventData, getDailyEventData, getMonthlyEventData } from "@/pages/stats/stats-data";
+import { combineDailyEventData, combineMonthlyEventData, getCumulativeFrozenData, getDailyEventData, getMonthlyEventData } from "@/pages/stats/stats-data";
 
 /** Get Monday 00:00 of the week `offset` weeks from now (0 = current, -1 = last week). */
 function getWeekMonday(offset: number): Date {
@@ -44,6 +45,8 @@ export function StatsPage() {
     queryKey: ["entries"],
     queryFn: () => getEntries(),
   });
+
+  const totalFrozenData = useMemo(() => getCumulativeFrozenData(entries), [entries]);
 
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
@@ -173,6 +176,8 @@ export function StatsPage() {
           onNext={nextMonth}
         />
       </div>
+
+      <TotalFrozenOverTimeChart data={totalFrozenData} />
 
       {/* Daily chart */}
       <DailyFrozenChart
