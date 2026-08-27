@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TotalFrozenData {
   date: string;
@@ -14,13 +15,24 @@ interface TotalFrozenData {
 }
 
 interface TotalFrozenOverTimeChartProps {
+  title: string;
   data: TotalFrozenData[];
+  onPrev: () => void;
+  onNext: () => void;
 }
 
-export function TotalFrozenOverTimeChart({ data }: TotalFrozenOverTimeChartProps) {
+export function TotalFrozenOverTimeChart({ title, data, onPrev, onNext }: TotalFrozenOverTimeChartProps) {
   return (
     <div className="rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-border/50">
-      <p className="mb-3 text-center text-sm font-medium">Total Frozen Over Time</p>
+      <div className="mb-3 flex items-center justify-between">
+        <button onClick={onPrev} className="rounded p-0.5 text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="size-4" />
+        </button>
+        <p className="text-center text-sm font-medium">{title}</p>
+        <button onClick={onNext} className="rounded p-0.5 text-muted-foreground hover:text-foreground">
+          <ChevronRight className="size-4" />
+        </button>
+      </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
@@ -45,12 +57,12 @@ export function TotalFrozenOverTimeChart({ data }: TotalFrozenOverTimeChartProps
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value} ml`, "Total Frozen"]}
+              formatter={(value: number) => [`${value} ml`, "Remaining Frozen"]}
             />
             <Line
               type="monotone"
               dataKey="totalMl"
-              name="Total Frozen"
+              name="Remaining Frozen"
               stroke="#6f9fc5"
               strokeWidth={2.5}
               dot={{ r: 3, fill: "#6f9fc5", strokeWidth: 0 }}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MilkSheetEntry } from "@/lib/sheets";
-import { combineDailyEventData, combineMonthlyEventData, getCumulativeFrozenData, getDailyEventData, getMonthlyEventData } from "./stats-data";
+import { combineDailyEventData, combineMonthlyEventData, getDailyEventData, getFrozenRemainingData, getMonthlyEventData } from "./stats-data";
 
 function entry(overrides: Partial<MilkSheetEntry>): MilkSheetEntry {
   return {
@@ -21,17 +21,39 @@ function entry(overrides: Partial<MilkSheetEntry>): MilkSheetEntry {
 }
 
 describe("used milk chart data", () => {
-  it("builds chronologically sorted cumulative frozen totals", () => {
-    expect(
-      getCumulativeFrozenData([
-        entry({ amount: 80, frozenAt: "2026-06-03T09:00:00Z" }),
-        entry({ amount: 100, frozenAt: "2026-06-01T09:00:00Z" }),
-        entry({ amount: 50, frozenAt: "2026-06-03T10:00:00Z" }),
-        entry({ amount: 999, frozenAt: "not-a-date" }),
-      ]),
-    ).toEqual([
-      { date: "1 Jun", totalMl: 100 },
-      { date: "3 Jun", totalMl: 230 },
+  it("calculates remaining milk across the selected week", () => {
+    const monday = new Date("2026-07-06T00:00:00Z");
+    const entries = [
+      entry({ amount: 100, frozenAt: "2026-06-01T09:00:00Z" }),
+      entry({ amount: 80, frozenAt: "2026-07-06T09:00:00Z", used: true, usedAt: "2026-07-08T09:00:00Z" }),
+      entry({ amount: 50, frozenAt: "2026-07-07T09:00:00Z" }),
+    ];
+
+    expect(getFrozenRemainingData(entries, "week", monday)).toEqual([
+      { date: "Mon 6/7", totalMl: 180 },
+      { date: "Tue 7/7", totalMl: 230 },
+      { date: "Wed 8/7", totalMl: 150 },
+      { date: "Thu 9/7", totalMl: 150 },
+      { date: "Fri 10/7", totalMl: 150 },
+      { date: "Sat 11/7", totalMl: 150 },
+      { date: "Sun 12/7", totalMl: 150 },
+    ]);
+  });
+
+  it("calculates remaining milk across the selected half-year", () => {
+    const entries = [
+      entry({ amount: 100, frozenAt: "2026-06-01T09:00:00Z" }),
+      entry({ amount: 80, frozenAt: "2026-07-06T09:00:00Z", used: true, usedAt: "2026-08-08T09:00:00Z" }),
+      entry({ amount: 50, frozenAt: "2026-07-07T09:00:00Z" }),
+    ];
+
+    expect(getFrozenRemainingData(entries, "month", new Date("2026-07-15T00:00:00Z"))).toEqual([
+      { date: "Jul", totalMl: 230 },
+      { date: "Aug", totalMl: 150 },
+      { date: "Sep", totalMl: 150 },
+      { date: "Oct", totalMl: 150 },
+      { date: "Nov", totalMl: 150 },
+      { date: "Dec", totalMl: 150 },
     ]);
   });
 

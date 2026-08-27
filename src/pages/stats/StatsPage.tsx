@@ -7,7 +7,7 @@ import { MonthlyFrozenChart } from "@/pages/stats/MonthlyFrozenChart";
 import { FrozenUsedChart } from "@/pages/stats/FrozenUsedChart";
 import { TotalFrozenOverTimeChart } from "@/pages/stats/TotalFrozenOverTimeChart";
 import { getFrozenMs } from "@/lib/frozen-date";
-import { combineDailyEventData, combineMonthlyEventData, getCumulativeFrozenData, getDailyEventData, getMonthlyEventData } from "@/pages/stats/stats-data";
+import { combineDailyEventData, combineMonthlyEventData, getDailyEventData, getFrozenRemainingData, getMonthlyEventData } from "@/pages/stats/stats-data";
 
 /** Get Monday 00:00 of the week `offset` weeks from now (0 = current, -1 = last week). */
 function getWeekMonday(offset: number): Date {
@@ -46,14 +46,20 @@ export function StatsPage() {
     queryFn: () => getEntries(),
   });
 
-  const totalFrozenData = useMemo(() => getCumulativeFrozenData(entries), [entries]);
-
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const [halfYearOffset, setHalfYearOffset] = useState(0);
 
   const weekMonday = useMemo(() => getWeekMonday(weekOffset), [weekOffset]);
   const monthStart = useMemo(() => getMonthStart(monthOffset), [monthOffset]);
+  const weeklyRemainingData = useMemo(
+    () => getFrozenRemainingData(entries, "week", weekMonday),
+    [entries, weekMonday],
+  );
+  const monthlyRemainingData = useMemo(
+    () => getFrozenRemainingData(entries, "month", new Date(), halfYearOffset),
+    [entries, halfYearOffset],
+  );
 
   // ── Week period ──────────────────────────────────────────────
   const { weekAdded, weekUsed } = useMemo(() => {
@@ -177,7 +183,19 @@ export function StatsPage() {
         />
       </div>
 
-      <TotalFrozenOverTimeChart data={totalFrozenData} />
+      <TotalFrozenOverTimeChart
+        title={`Frozen Milk Remaining · ${weekLabel}`}
+        data={weeklyRemainingData}
+        onPrev={prevWeek}
+        onNext={nextWeek}
+      />
+
+      <TotalFrozenOverTimeChart
+        title={`Frozen Milk Remaining · ${halfYearLabel.replace("Monthly Frozen · ", "")}`}
+        data={monthlyRemainingData}
+        onPrev={prevHalfYear}
+        onNext={nextHalfYear}
+      />
 
       {/* Daily chart */}
       <DailyFrozenChart

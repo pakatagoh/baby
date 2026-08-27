@@ -20,38 +20,55 @@ export function getEventMs(entry: MilkSheetEntry, event: StatsEvent): number {
   return getFrozenMs(entry);
 }
 
-export function getCumulativeFrozenData(entries: MilkSheetEntry[]) {
-  const dailyTotals = new Map<string, { year: number; month: number; day: number; amount: number }>();
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Singapore",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-  });
-
-  for (const entry of entries) {
-    const frozenMs = getFrozenMs(entry);
-    if (Number.isNaN(frozenMs)) continue;
-    const parts = Object.fromEntries(
-      formatter.formatToParts(new Date(frozenMs)).map((part) => [part.type, part.value]),
-    );
-    const year = Number(parts.year);
-    const month = Number(parts.month);
-    const day = Number(parts.day);
-    const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const current = dailyTotals.get(key);
-    dailyTotals.set(key, {
-      year,
-      month,
-      day,
-      amount: (current?.amount ?? 0) + entry.amount,
-    });
+export function getFrozenRemainingData(
+  entries: MilkSheetEntry[],
+  range: "week" | "month",
+  anchor: Date,
+  offset = 0,
+) {
+  const start = new Date(anchor);
+  if (range === "week") {
+    start.setHours(0, 0, 0, 0);
+  } else {
+    const halfStart = anchor.getMonth() < 6 ? 0 : 6;
+    start.setMonth(halfStart + offset * 6, 1);
+    start.setHours(0, 0, 0, 0);
   }
 
-  let totalMl = 0;
-  return [...dailyTotals.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, value]) => {
-    totalMl += value.amount;
-    return { date: `${value.day} ${MONTHS[value.month - 1]}`, totalMl };
+  const events: Array<{ timestamp: number; delta: number }> = [];
+  for (const entry of entries) {
+    const frozenMs = getEventMs(entry, "frozen");
+    if (!Number.isNaN(frozenMs)) events.push({ timestamp: frozenMs, delta: entry.amount });
+    const usedMs = getEventMs(entry, "used");
+    if (!Number.isNaN(usedMs)) events.push({ timestamp: usedMs, delta: -entry.amount });
+  }
+  events.sort((a, b) => a.timestamp - b.timestamp);
+
+  let remaining = events
+    .filter((event) => event.timestamp < start.getTime())
+    .reduce((total, event) => total + event.delta, 0);
+  const points = range === "week" ? 7 : 6;
+
+  return Array.from({ length: points }, (_, index) => {
+    const bucketStart = new Date(start);
+    if (range === "week") bucketStart.setDate(start.getDate() + index);
+    else bucketStart.setMonth(start.getMonth() + index);
+    const bucketEnd = new Date(bucketStart);
+    if (range === "week") bucketEnd.setDate(bucketStart.getDate() + 1);
+    else bucketEnd.setMonth(bucketStart.getMonth() + 1);
+
+    for (const event of events) {
+      if (event.timestamp >= bucketStart.getTime() && event.timestamp < bucketEnd.getTime()) {
+        remaining += event.delta;
+      }
+    }
+
+    return {
+      date: range === "week"
+        ? `${DAYS[(bucketStart.getDay() + 6) % 7]} ${bucketStart.getDate()}/${bucketStart.getMonth() + 1}`
+        : MONTHS[bucketStart.getMonth()],
+      totalMl: remaining,
+    };
   });
 }
 
