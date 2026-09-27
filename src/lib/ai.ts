@@ -52,7 +52,6 @@ export async function analyzeMilkPacket(
       },
     ],
     providerOptions: { openai: { reasoningEffort: "none" } },
-    temperature: 0.1,
     maxOutputTokens: 200,
   });
 

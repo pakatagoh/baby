@@ -40,5 +40,6 @@ describe("analyzeMilkPacket OpenAI configuration", () => {
         providerOptions: { openai: { reasoningEffort: "none" } },
       }),
     );
+    expect(mocks.generateText.mock.calls[0][0]).not.toHaveProperty("temperature");
   });
 });
