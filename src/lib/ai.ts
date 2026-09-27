@@ -1,13 +1,9 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { z } from "zod";
 
-const opencode = createAnthropic({
-  baseURL: "https://opencode.ai/zen/go/v1",
-  apiKey: process.env.OPENCODE_API_KEY!,
-});
-
-const visionModel = opencode("minimax-m3");
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const visionModel = openai("gpt-4o-mini");
 
 const MilkPacketSchema = z.object({
   frozenAt: z.string(),
@@ -18,13 +14,10 @@ const MilkPacketSchema = z.object({
 export type MilkPacketResult = z.infer<typeof MilkPacketSchema>;
 
 /**
- * Extract milk packet label info from a photo.
+ * Extract milk packet label info from a photo using OpenAI vision.
  *
- * Uses generateText with prompt-instructed JSON output instead of generateObject
- * because minimax-m3 via OpenCode's Anthropic-compatible API does not support
- * tool calling — the model sees the tools but responds with text about them
- * rather than invoking them, causing generateObject to fail with "No object
- * generated: the model did not return a response."
+ * The model is instructed to return JSON; the response is parsed and validated
+ * against the schema below before it is returned to the upload pipeline.
  */
 export async function analyzeMilkPacket(
   imageBase64: string,
@@ -59,7 +52,7 @@ export async function analyzeMilkPacket(
       },
     ],
     temperature: 0.1,
-    maxTokens: 200,
+    maxOutputTokens: 200,
   });
 
   // The model may wrap JSON in markdown code fences; strip them.
