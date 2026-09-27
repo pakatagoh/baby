@@ -1,9 +1,9 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
-const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const visionModel = openai("gpt-6-luna");
+const openCodeGoBaseURL = "https://opencode.ai/zen/go/v1";
 
 const MilkPacketSchema = z.object({
   frozenAt: z.string(),
@@ -14,7 +14,7 @@ const MilkPacketSchema = z.object({
 export type MilkPacketResult = z.infer<typeof MilkPacketSchema>;
 
 /**
- * Extract milk packet label info from a photo using OpenAI vision.
+ * Extract milk packet label info from a photo using OpenCode Go vision.
  *
  * The model is instructed to return JSON; the response is parsed and validated
  * against the schema below before it is returned to the upload pipeline.
@@ -23,6 +23,22 @@ export async function analyzeMilkPacket(
   imageBase64: string,
   mimeType: string,
 ): Promise<MilkPacketResult> {
+  const apiKey = process.env.OPENCODE_API_KEY;
+  if (!apiKey) throw new Error("OPENCODE_API_KEY is required for milk packet analysis");
+
+  const sessionId = randomUUID();
+  const openai = createOpenAI({
+    apiKey,
+    baseURL: openCodeGoBaseURL,
+    headers: { "User-Agent": "baby-app/1.0" },
+    fetch: (input, init) => {
+      const headers = new Headers(init?.headers);
+      headers.set("x-opencode-session", sessionId);
+      return fetch(input, { ...init, headers });
+    },
+  });
+  const visionModel = openai.responses("gpt-6-luna");
+
   const { text } = await generateText({
     model: visionModel,
     system:

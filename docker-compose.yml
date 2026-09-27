@@ -41,7 +41,7 @@ services:
       GOOGLE_SHEET_ID: ${GOOGLE_SHEET_ID}
       GOOGLE_SHEET_TAB: ${GOOGLE_SHEET_TAB}
       GOOGLE_TOKEN_PATH: /secrets/google_token.json
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENCODE_API_KEY: ${OPENCODE_API_KEY}
     volumes:
       - images:/images
       - ./google-token.json:/secrets/google_token.json:ro

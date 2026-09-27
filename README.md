@@ -28,7 +28,7 @@ A web app for tracking frozen breast milk storage. Snap a photo of a milk packet
 | Data fetching | [TanStack Query](https://tanstack.com/query) with SSR integration |
 | Server runtime | [Nitro](https://nitro.build/) |
 | Styling | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
-| AI / Vision | [OpenAI API](https://platform.openai.com/docs) (`gpt-6-luna` vision model) via [Vercel AI SDK](https://sdk.vercel.ai/) |
+| AI / Vision | OpenCode Go (`gpt-6-luna`) via [Vercel AI SDK](https://sdk.vercel.ai/) |
 | Image processing | [Sharp](https://sharp.pixelplumbing.com/) (resize + optimize on upload) |
 | Image serving | [imgproxy](https://imgproxy.net/) (on-the-fly resize/crop with signed URLs) |
 | Image caching | Browser/CDN via `Cache-Control: max-age=31536000` (1 year). imgproxy's server-side cache is [Pro-only](https://docs.imgproxy.net/cache/internal). |
@@ -42,7 +42,7 @@ A web app for tracking frozen breast milk storage. Snap a photo of a milk packet
 - **pnpm** (enabled via corepack)
 - **Docker** (for imgproxy and production-like testing)
 - A **Google Cloud project** with Sheets API enabled and an OAuth token (see [google-token.json](#google-tokenjson))
-- An **OpenAI API** key with access to the `gpt-6-luna` vision model
+- An **OpenCode Go subscription** with API key access to the `gpt-6-luna` model
 
 ## Getting started
 
@@ -67,7 +67,7 @@ Fill in the required values in `.env`:
 | `GOOGLE_SHEET_ID` | The Google Sheet ID (from the sheet URL) |
 | `GOOGLE_SHEET_TAB` | The tab/sheet name (e.g. `Frozen Breast Milk`) |
 | `GOOGLE_TOKEN_PATH` | Path to a Google OAuth token JSON file (default: `./google-token.json`) |
-| `OPENAI_API_KEY` | API key from [OpenAI](https://platform.openai.com/api-keys) |
+| `OPENCODE_API_KEY` | API key for OpenCode Go |
 | `IMAGE_ORIGINALS_DIR` | Where uploaded images are stored (default: `./data/images/originals`) |
 | `IMGPROXY_BASE_URL` | Base URL for imgproxy (default: `http://localhost:8080/img` for dev, `http://localhost:3000/img` for Docker) |
 | `IMGPROXY_KEY` | 64-char hex key for imgproxy URL signing |
