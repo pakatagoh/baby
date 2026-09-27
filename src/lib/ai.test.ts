@@ -36,7 +36,8 @@ describe("analyzeMilkPacket OpenAI configuration", () => {
     expect(mocks.providerConfig).toEqual({ apiKey: "test-openai-key" });
     expect(mocks.generateText).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: { provider: "openai.chat", modelId: "gpt-4o-mini" },
+        model: { provider: "openai.chat", modelId: "gpt-6-luna" },
+        providerOptions: { openai: { reasoningEffort: "none" } },
       }),
     );
   });

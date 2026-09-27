@@ -21,7 +21,7 @@ for notifications. Optimized images are served on the fly via
 - **Database:** `better-sqlite3` + Drizzle ORM/Kit. SQLite uses WAL mode,
   foreign keys, and a bounded busy timeout. Migrations run during server
   startup before readiness is reported.
-- **AI:** OpenAI API (`gpt-4o-mini` vision model) via Vercel AI SDK.
+- **AI:** OpenAI API (`gpt-6-luna` vision model) via Vercel AI SDK.
 - **Images:** Sharp for upload-time resize/optimize; imgproxy for serve-time
   resize/crop with HMAC-signed URLs.
 - **Deployment:** Docker → k3s (FluxCD HelmRelease using bjw-s `app-template`

@@ -3,7 +3,7 @@ import { generateText } from "ai";
 import { z } from "zod";
 
 const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const visionModel = openai("gpt-4o-mini");
+const visionModel = openai("gpt-6-luna");
 
 const MilkPacketSchema = z.object({
   frozenAt: z.string(),
@@ -51,6 +51,7 @@ export async function analyzeMilkPacket(
         ],
       },
     ],
+    providerOptions: { openai: { reasoningEffort: "none" } },
     temperature: 0.1,
     maxOutputTokens: 200,
   });

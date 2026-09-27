@@ -28,7 +28,7 @@ A web app for tracking frozen breast milk storage. Snap a photo of a milk packet
 | Data fetching | [TanStack Query](https://tanstack.com/query) with SSR integration |
 | Server runtime | [Nitro](https://nitro.build/) |
 | Styling | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
-| AI / Vision | [OpenAI API](https://platform.openai.com/docs) (`gpt-4o-mini` vision model) via [Vercel AI SDK](https://sdk.vercel.ai/) |
+| AI / Vision | [OpenAI API](https://platform.openai.com/docs) (`gpt-6-luna` vision model) via [Vercel AI SDK](https://sdk.vercel.ai/) |
 | Image processing | [Sharp](https://sharp.pixelplumbing.com/) (resize + optimize on upload) |
 | Image serving | [imgproxy](https://imgproxy.net/) (on-the-fly resize/crop with signed URLs) |
 | Image caching | Browser/CDN via `Cache-Control: max-age=31536000` (1 year). imgproxy's server-side cache is [Pro-only](https://docs.imgproxy.net/cache/internal). |
@@ -42,7 +42,7 @@ A web app for tracking frozen breast milk storage. Snap a photo of a milk packet
 - **pnpm** (enabled via corepack)
 - **Docker** (for imgproxy and production-like testing)
 - A **Google Cloud project** with Sheets API enabled and an OAuth token (see [google-token.json](#google-tokenjson))
-- An **OpenAI API** key with access to the `gpt-4o-mini` vision model
+- An **OpenAI API** key with access to the `gpt-6-luna` vision model
 
 ## Getting started
 
