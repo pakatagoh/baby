@@ -6,18 +6,41 @@ const MONTHS = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ] as const;
 
-/** Add `months` to the frozenAt datetime and return an expiry month. */
+/** Dedicated milk freezer storage policy. */
+export const MILK_SHELF_LIFE_MONTHS = 6;
+const SGT_OFFSET_MS = 8 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Add calendar months in SGT, clamping to month-end and preserving freeze time. */
+export function getExpiryMs(
+  entry: Pick<MilkSheetEntry, "frozenAt">,
+  offsetMonths = MILK_SHELF_LIFE_MONTHS,
+): number {
+  const freezeMs = getFrozenMs(entry);
+  if (Number.isNaN(freezeMs)) return NaN;
+  const date = new Date(freezeMs + SGT_OFFSET_MS);
+  const day = date.getUTCDate();
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + offsetMonths);
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+  date.setUTCDate(Math.min(day, lastDay));
+  return date.getTime() - SGT_OFFSET_MS;
+}
+
+export function daysUntilExpiry(entry: Pick<MilkSheetEntry, "frozenAt">, now = Date.now()): number {
+  return Math.ceil((getExpiryMs(entry) - now) / DAY_MS);
+}
+
+/** Add calendar months to frozenAt and return its Singapore expiry month. */
 export function getExpiryMonth(
   entry: MilkSheetEntry,
-  offsetMonths = 3,
+  offsetMonths = MILK_SHELF_LIFE_MONTHS,
 ): string | null {
-  const freezeMs = getFrozenMs(entry);
-  if (Number.isNaN(freezeMs)) return null;
-  const d = new Date(freezeMs);
+  const expiryMs = getExpiryMs(entry, offsetMonths);
+  if (Number.isNaN(expiryMs)) return null;
+  const d = new Date(expiryMs + SGT_OFFSET_MS);
 
-  d.setMonth(d.getMonth() + offsetMonths);
-
-  return `${MONTHS[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`;
+  return `${MONTHS[d.getUTCMonth()]}-${String(d.getUTCFullYear()).slice(2)}`;
 }
 
 /** "Oct-26" → "October 2026" */
@@ -38,16 +61,14 @@ export function formatExpiryMonth(key: string): string {
  */
 export function getExpiryDate(
   entry: MilkSheetEntry,
-  offsetMonths = 3,
+  offsetMonths = MILK_SHELF_LIFE_MONTHS,
 ): string | null {
-  const freezeMs = getFrozenMs(entry);
-  if (Number.isNaN(freezeMs)) return null;
-  const d = new Date(freezeMs);
+  const expiryMs = getExpiryMs(entry, offsetMonths);
+  if (Number.isNaN(expiryMs)) return null;
+  const d = new Date(expiryMs + SGT_OFFSET_MS);
 
-  d.setMonth(d.getMonth() + offsetMonths);
-
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${dd}-${MONTHS[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`;
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${dd}-${MONTHS[d.getUTCMonth()]}-${String(d.getUTCFullYear()).slice(2)}`;
 }
 
 /** "15-Oct-26" → "15 October 2026" */
