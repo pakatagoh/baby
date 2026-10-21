@@ -1,5 +1,18 @@
+# Node's version pin alone does not remediate the eMudhra incident: its bundled
+# roots still trust an affected chain. Update BOTH Alpine stores before Node
+# makes HTTPS calls, and select only the OpenSSL/system store (not the additive
+# --use-system-ca mode). The floor also invalidates pre-remediation cache layers.
+FROM node:22.23.3-alpine AS trusted-node
+RUN apk add --no-cache --upgrade \
+    'ca-certificates>=20261020-r0' 'ca-certificates-bundle>=20261020-r0' && \
+    update-ca-certificates
+# Preserve caller-supplied build options while adding the required trust mode.
+ARG NODE_OPTIONS
+ENV NODE_OPTIONS="${NODE_OPTIONS} --use-openssl-ca" \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
 # ─── Build stage ──────────────────────────────────────────────
-FROM node:22-alpine AS build
+FROM trusted-node AS build
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -19,7 +32,7 @@ ARG CACHE_BUST=0
 RUN rm -rf node_modules/.vite .output node_modules/.nitro && pnpm build && pnpm verify:pwa
 
 # ─── Production stage ─────────────────────────────────────────
-FROM node:22-alpine
+FROM trusted-node
 
 RUN corepack enable && corepack prepare pnpm@latest --activate && \
     apk add --no-cache python3 make g++
