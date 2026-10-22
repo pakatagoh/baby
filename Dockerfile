@@ -1,8 +1,8 @@
-# Node's version pin alone does not remediate the eMudhra incident: its bundled
-# roots still trust an affected chain. Update BOTH Alpine stores before Node
-# makes HTTPS calls, and select only the OpenSSL/system store (not the additive
-# --use-system-ca mode). The floor also invalidates pre-remediation cache layers.
-FROM node:22.23.3-alpine AS trusted-node
+# Node 22.23.4 natively blocks the affected eMudhra intermediates. Keep BOTH
+# patched Alpine stores and the OpenSSL/system-only trust mode as defense in
+# depth (not the additive --use-system-ca mode). The package floors also
+# invalidate pre-remediation cache layers.
+FROM node:22.23.4-alpine AS trusted-node
 RUN apk add --no-cache --upgrade \
     'ca-certificates>=20261020-r0' 'ca-certificates-bundle>=20261020-r0' && \
     update-ca-certificates
